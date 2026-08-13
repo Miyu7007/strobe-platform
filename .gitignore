@@ -1,0 +1,17 @@
+node_modules/
+.next/
+.next-*/
+.next-old/
+.next-trash-*/
+.env.local
+.env
+*.log
+.DS_Store
+out/
+.vercel/
+build-stdout.txt
+build-stderr.txt
+build-output.log
+run-build.cjs
+copy-deps.cjs
+src/app/work/_id_old/
