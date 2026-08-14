@@ -680,6 +680,11 @@ $('composeAutoBtn').onclick=async()=>{
     if(sel.length<2){showError('请至少选2帧');return}
     const th=parseInt($('thresholdAuto').value)||20;
     selectedBrushFrames=sel;
+    const btn=$('composeAutoBtn');
+    const origText=btn.textContent;
+    btn.disabled=true;btn.textContent='⏳ 合成中...';
+    status.textContent='⏳ 正在计算，请稍候（帧数越多越慢）...';
+    await new Promise(r=>setTimeout(r,50));
     try{
         autoBgData=computeAutoBackground(sel.map(f=>f.data));
         const result=composeAuto(sel.map(f=>f.data),th);
@@ -688,7 +693,9 @@ $('composeAutoBtn').onclick=async()=>{
         pctx.putImageData(result,0,0);
         initAutoPreview(sel.length,th);
         showResult();
-    }catch(err){showError('合成失败:'+err.message)}
+        status.textContent='✅ 合成完成！';
+    }catch(err){showError('合成失败:'+err.message);status.textContent=''}
+    finally{btn.disabled=false;btn.textContent=origText}
 };
 
 function initAutoPreview(total,th){
@@ -788,8 +795,12 @@ $('editCanvas').onclick=()=>{$('editHint').style.display='none'};
 $('editHint').onclick=e=>{e.stopPropagation();$('editHint').style.display='none'};
 
 // ============ 涂抹模式：合成 ============
-$('composeBrushBtn').onclick=()=>{
+$('composeBrushBtn').onclick=async()=>{
     console.log('[DEBUG] composeBrushBtn clicked, bgFrameIndex=',bgFrameIndex,'extractedBrushFrames.length=',extractedBrushFrames.length);
+    const btn=$('composeBrushBtn');
+    const origText=btn.textContent;
+    btn.disabled=true;btn.textContent='⏳ 合成中...';
+    await new Promise(r=>setTimeout(r,50));
     try{
         const bgFrame=extractedBrushFrames[bgFrameIndex];
         if(!bgFrame){
@@ -832,6 +843,7 @@ $('composeBrushBtn').onclick=()=>{
         alert('❌ 合成失败：'+err.message+'\n\n请打开F12控制台查看详细信息');
         showError('❌ 合成失败：'+err.message+'<br>请打开F12控制台查看详细信息');
     }
+    finally{btn.disabled=false;btn.textContent=origText}
 };
 
 function initBrushIndicator(){
