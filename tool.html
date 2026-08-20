@@ -155,6 +155,24 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
 .error-msg strong{color:#fff}
 .error-msg br+br{margin-top:6px}
 .status{margin-top:8px;font-size:11px;color:#888;text-align:center}
+
+/* 水印提示弹窗 */
+.wm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:9999;padding:16px}
+.wm-overlay.show{display:flex}
+.wm-modal{max-width:420px;width:100%;background:#1f2540;border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:24px;box-shadow:0 16px 48px rgba(0,0,0,0.5);position:relative}
+.wm-modal h3{font-size:18px;margin-bottom:8px;color:#fff}
+.wm-modal .wm-sub{font-size:13px;color:#bbb;line-height:1.7;margin-bottom:18px}
+.wm-opt{display:block;width:100%;text-align:left;background:rgba(102,126,234,0.12);border:1px solid rgba(102,126,234,0.4);border-radius:12px;padding:14px 16px;margin-bottom:12px;cursor:pointer;color:#fff;transition:all .2s}
+.wm-opt:hover{background:rgba(102,126,234,0.22);transform:translateY(-1px)}
+.wm-opt .wm-opt-title{font-size:15px;font-weight:bold;color:#a5b4fc;margin-bottom:4px}
+.wm-opt .wm-opt-desc{font-size:12px;color:#cfd2e8;line-height:1.6}
+.wm-opt.wm-purple{background:rgba(139,92,246,0.12);border-color:rgba(139,92,246,0.4)}
+.wm-opt.wm-purple:hover{background:rgba(139,92,246,0.22)}
+.wm-opt.wm-purple .wm-opt-title{color:#c4b5fd}
+.wm-still{display:block;width:100%;text-align:center;background:transparent;border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:11px;font-size:13px;color:#ccc;cursor:pointer;margin-top:4px}
+.wm-still:hover{background:rgba(255,255,255,0.06);color:#fff}
+.wm-close{position:absolute;top:12px;right:14px;font-size:20px;color:#888;cursor:pointer;line-height:1;border:none;background:none}
+.wm-close:hover{color:#fff}
 </style>
 </head>
 <body>
@@ -1038,7 +1056,7 @@ $('savePreviewBtn').onclick=async()=>{
     const c=await prepareExportCanvas();
     if(!c){ showError('请先合成频闪照片'); return; }
     if(!appState.isPro){
-        const ok=confirm('⚠️ 免费版导出的图片将带有 StrobeArt 水印（右下角）。\n\n如需去除水印：\n• 升级会员（/pricing/）\n• 或用 30 积分兑换「去水印」额度（/profile/）\n\n是否继续下载带水印的图片？');
+        const ok=await showWatermarkModal();
         if(!ok) return;
     }
     const a=document.createElement('a');
@@ -1051,7 +1069,7 @@ $('downloadBtn').onclick=async()=>{
     const c=await prepareExportCanvas();
     if(!c){ showError('请先合成频闪照片'); return; }
     if(!appState.isPro){
-        const ok=confirm('⚠️ 免费版导出的图片将带有 StrobeArt 水印（右下角）。\n\n如需去除水印：\n• 升级会员（/pricing/）\n• 或用 30 积分兑换「去水印」额度（/profile/）\n\n是否继续下载带水印的图片？');
+        const ok=await showWatermarkModal();
         if(!ok) return;
     }
     const a=document.createElement('a');
@@ -1179,6 +1197,28 @@ $('resetBtn').onclick=()=>{
 function showError(m){$('errorMsg').innerHTML=m;$('errorMsg').style.display='block'}
 function hideError(){$('errorMsg').style.display='none'}
 
+// 在 iframe / 独立页中都能正确跳转到目标页面
+function gotoPage(url){
+  try{
+    if(window.top && window.top!==window.self){ window.top.location.href=url; }
+    else { window.location.href=url; }
+  }catch(e){ window.open(url,'_blank'); }
+}
+
+// 取代原生 confirm：两个选项可点击跳转，仍可下载带水印图
+function showWatermarkModal(){
+  return new Promise((resolve)=>{
+    const overlay=document.getElementById('wmOverlay');
+    const done=(v)=>{ overlay.classList.remove('show'); resolve(v); };
+    overlay.querySelector('.wm-close').onclick=()=>done(false);
+    overlay.querySelector('.wm-still').onclick=()=>done(true);
+    overlay.querySelector('.wm-opt-upgrade').onclick=()=>{ done(false); gotoPage('/strobe-platform/pricing/'); };
+    overlay.querySelector('.wm-opt-redeem').onclick=()=>{ done(false); gotoPage('/strobe-platform/profile/'); };
+    overlay.onclick=(e)=>{ if(e.target===overlay) done(false); };
+    overlay.classList.add('show');
+  });
+}
+
 // ============ 分享到广场 ============
 $('shareToGalleryBtn').onclick=async()=>{
     if(resultArea.style.display==='none'){alert('请先合成频闪照片再分享');return}
@@ -1237,5 +1277,21 @@ window.addEventListener('message',(e)=>{
 });
 });
 </script>
+<div class="wm-overlay" id="wmOverlay">
+  <div class="wm-modal">
+    <button class="wm-close" title="关闭">&times;</button>
+    <h3>免费版导出提示</h3>
+    <p class="wm-sub">免费版导出的图片将带有 <strong>StrobeArt</strong> 水印（右下角）。选择下方任一方式去除水印后，即可下载干净原图：</p>
+    <div class="wm-opt wm-opt-upgrade">
+      <div class="wm-opt-title">① 升级会员（去 /pricing）</div>
+      <div class="wm-opt-desc">单次 ¥9.9 / 月卡 ¥29 / 年卡 ¥128 —— 无水印 + 不限视频时长</div>
+    </div>
+    <div class="wm-opt wm-purple wm-opt-redeem">
+      <div class="wm-opt-title">② 用 30 积分兑换「去水印」额度（去 /profile）</div>
+      <div class="wm-opt-desc">消耗 30 积分，本次导出即获无水印原图（额度用完需再次兑换）</div>
+    </div>
+    <button class="wm-still">仍下载带水印的图片</button>
+  </div>
+</div>
 </body>
 </html>
