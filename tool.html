@@ -1185,7 +1185,8 @@ $('resetBtn').onclick=()=>{
     framesEditArea.style.display='none';$('modeSelector').style.display='none';
     videoPreview.style.display='none';timeSelector.style.display='none';
     settings.style.display='none';uploadArea.style.display='block';
-    $('projectBanner').style.display='none';fileInput.value='';
+    // 重新开始时保留 projectBanner（让用户可继续导入已有项目）
+    $('projectBanner').style.display='flex';fileInput.value='';
     selectedFile=null;extractedAutoFrames=[];extractedBrushFrames=[];selectedBrushFrames=[];
     maskedFramesOrdered=[];projectLoaded=false;currentProjectName='';autoBgFrameIndex=-1;autoBgData=null;
     $('saveProjectBtn').style.display='none';$('saveProjectBtn2').style.display='none';
