@@ -443,7 +443,10 @@ let selectedBrushFrames=[]; // 自动模式选中的帧
 let isDrawing=false,isErasing=false,brushSize=20;
 
 // DOM 缓存
-const $=(id)=>document.getElementById(id);
+// 注意：必须是函数声明而非 const 箭头函数，因为 updateMembershipBar() 在第 396 行就使用了 $，
+// 而 DOM 缓存这一大段声明（line ~446）在脚本靠后位置才执行。const $ 当时会处于 TDZ，
+// 触发 "Cannot access '$' before initialization"。函数声明会被 hoisting 提升到脚本顶部。
+function $(id){ return document.getElementById(id); }
 const uploadArea=$('uploadArea'),fileInput=$('fileInput'),video=$('video'),playBtn=$('playBtn');
 const videoPreview=$('videoPreview'),timeSelector=$('timeSelector'),settings=$('settings');
 const extractBtn=$('extractBtn'),progressBar=$('progressBar'),framesSelectArea=$('framesSelectArea');
