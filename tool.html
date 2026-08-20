@@ -162,6 +162,7 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
 <h1>🎬 频闪照片合成器</h1>
 <div style="font-size:0.8rem;color:#999;text-align:center;line-height:1.6;margin-top:-10px;margin-bottom:10px;">开发者：俞俊雄<br>Email:584273654@qq.com</div>
 <p class="subtitle">上传视频 → 提取帧 → 自动检测或涂抹编辑 → 合成</p>
+<div id="membershipBar" style="text-align:center;font-size:13px;margin-bottom:14px;color:#a5b4fc;"></div>
 
 <!-- 项目管理 Banner -->
 <div class="project-banner" id="projectBanner">
@@ -370,6 +371,70 @@ let currentFrameIndex=0,bgFrameIndex=0;
 let autoBgFrameIndex=-1; // 自动模式背景帧索引（-1表示使用中间帧）
 let autoBgData=null; // 自动模式逐像素背景缓存（基于所选全部帧统计）
 
+// ============ 会员 / 水印 / 导入限制 桥接 ============
+// 注意：本工具是纯前端合成器，会员状态由父页面(/tool)通过 postMessage 下发
+const WATERMARK_TEXT = 'StrobeArt · miyu7007.github.io/strobe-platform';
+let appState = { isPro:false, watermarkExportsLeft:0, longVideoImportsLeft:0, points:0 };
+let lastComposite = null; // 最近一次合成的原始像素（无水印），供导出时按权限决定水印
+let _reqId=0; const _pending={};
+function postToParent(msg){ try{ window.parent.postMessage(msg,'*'); }catch(e){} }
+function requestParent(action){
+  return new Promise(res=>{
+    const id=++_reqId; _pending[id]=res;
+    postToParent({type:'strobe-request', reqId:id, action});
+    setTimeout(()=>{ if(_pending[id]){ _pending[id]({ok:false}); delete _pending[id]; } }, 8000);
+  });
+}
+window.addEventListener('message',(e)=>{
+  const d=e.data; if(!d) return;
+  if(d.type==='strobe-state'){ appState=Object.assign({},appState,d.state); updateMembershipBar(); }
+  else if(d.type==='strobe-response' && d.reqId && _pending[d.reqId]){ _pending[d.reqId](d); delete _pending[d.reqId]; }
+});
+postToParent({type:'strobe-ready'});
+
+function updateMembershipBar(){
+  const bar=$('membershipBar'); if(!bar) return;
+  if(appState.isPro){
+    bar.innerHTML='👑 <strong>Pro 会员</strong> · 无水印 · 导入不限时长';
+  }else{
+    const extra=[];
+    if(appState.watermarkExportsLeft>0) extra.push('去水印×'+appState.watermarkExportsLeft);
+    if(appState.longVideoImportsLeft>0) extra.push('长视频×'+appState.longVideoImportsLeft);
+    bar.innerHTML='🆓 免费版 · 导出带水印 · 导入≤15秒'+(extra.length?(' · 已兑换：'+extra.join(' / ')):'');
+  }
+}
+updateMembershipBar();
+
+function roundRectPath(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function drawWatermark(ctx,w,h){
+  ctx.save();
+  const fontSize=Math.max(15, Math.round(w/42));
+  ctx.font='bold '+fontSize+'px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+  const padX=fontSize*0.6, padY=fontSize*0.42;
+  const tw=ctx.measureText(WATERMARK_TEXT).width;
+  const boxW=tw+padX*2, boxH=fontSize+padY*2;
+  const x=w-boxW-Math.max(14,Math.round(w*0.02)), y=h-boxH-Math.max(14,Math.round(h*0.02));
+  ctx.globalAlpha=0.42; ctx.fillStyle='#000'; roundRectPath(ctx,x,y,boxW,boxH,boxH/2); ctx.fill();
+  ctx.globalAlpha=1; ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.textAlign='left';
+  ctx.fillText(WATERMARK_TEXT, x+padX, y+boxH/2+1);
+  ctx.restore();
+}
+// 导出画布：免费版默认带水印；若有「去水印」额度则消耗后去掉水印
+async function prepareExportCanvas(){
+  if(!lastComposite) return null;
+  const c=document.createElement('canvas'); c.width=lastComposite.width; c.height=lastComposite.height;
+  const cx=c.getContext('2d'); cx.putImageData(lastComposite,0,0);
+  if(!appState.isPro){
+    let needWm=true;
+    if(appState.watermarkExportsLeft>0){
+      const res=await requestParent('consume-watermark');
+      if(res&&res.ok){ needWm=false; appState.watermarkExportsLeft=res.watermarkExportsLeft||0; }
+    }
+    if(needWm) drawWatermark(cx,c.width,c.height);
+  }
+  return c;
+}
+
 // 预览数据
 let maskedFramesOrdered=[]; // [{frame, index}]
 let selectedBrushFrames=[]; // 自动模式选中的帧
@@ -402,9 +467,21 @@ function handleFile(file){
     status.textContent='加载视频中...';
     console.log('[handleFile] setting video.src, file:',file.name);
     video.src=URL.createObjectURL(file);
-    video.onloadedmetadata=()=>{
+    video.onloadedmetadata=async()=>{
         videoDuration=video.duration;endTime=videoDuration;startTime=0;
         status.textContent='✅ 时长: '+videoDuration.toFixed(1)+'s';
+        // 免费版限制导入时长 ≤ 15 秒；若有「长视频」额度则消耗后放行
+        if(!appState.isPro && videoDuration>15){
+            let allowed=false;
+            if(appState.longVideoImportsLeft>0){
+                const res=await requestParent('consume-longvideo');
+                if(res&&res.ok){ allowed=true; appState.longVideoImportsLeft=res.longVideoImportsLeft||0; }
+            }
+            if(!allowed){
+                endTime=15;startTime=0;
+                status.textContent='✅ 时长: '+videoDuration.toFixed(1)+'s（免费版仅取前15秒，升级或兑换「长视频」解锁全部）';
+            }
+        }
         videoPreview.style.display='block';timeSelector.style.display='block';settings.style.display='block';videoLoaded=true;
         updateTimeInputs();updateTimelineUI();updateVideoTimeDisplay();
     };
@@ -691,6 +768,8 @@ $('composeAutoBtn').onclick=async()=>{
         const pc=previewCanvas;pctx=pc.getContext('2d');
         pc.width=result.width;pc.height=result.height;pc.style.display='block';
         pctx.putImageData(result,0,0);
+        lastComposite=result;
+        if(!appState.isPro) drawWatermark(pctx,pc.width,pc.height);
         initAutoPreview(sel.length,th);
         showResult();
         status.textContent='✅ 合成完成！';
@@ -876,6 +955,8 @@ function updateBrushPreview(frameCount){
         });
     }
     previewCanvas.getContext('2d').putImageData(result,0,0);
+    lastComposite=result;
+    if(!appState.isPro) drawWatermark(previewCanvas.getContext('2d'),result.width,result.height);
     const pct=(count/maskedFramesOrdered.length*100);
     $('frameSliderProgress').style.width=pct+'%';
     $('previewCount').textContent='显示 '+count+' / '+maskedFramesOrdered.length+' 帧';
@@ -894,9 +975,11 @@ function updatePreview(){
         const frames=selectedBrushFrames.slice(0,Math.max(1,count));
         if(frames.length===0)return;
         try{
-            const result=composeAuto(frames.map(f=>f.data),th);
-            previewCanvas.getContext('2d').putImageData(result,0,0);
-            const pct=(count/selectedBrushFrames.length*100);
+        const result=composeAuto(frames.map(f=>f.data),th);
+        previewCanvas.getContext('2d').putImageData(result,0,0);
+        lastComposite=result;
+        if(!appState.isPro) drawWatermark(previewCanvas.getContext('2d'),result.width,result.height);
+        const pct=(count/selectedBrushFrames.length*100);
             $('frameSliderProgress').style.width=pct+'%';
             $('previewCount').textContent='显示 '+count+' / '+selectedBrushFrames.length+' 帧';
         }catch(e){console.error('预览更新失败',e)}
@@ -934,18 +1017,21 @@ function showResult(){
 }
 
 // ============ 保存 / 下载 ============
-$('savePreviewBtn').onclick=()=>{
+$('savePreviewBtn').onclick=async()=>{
+    const c=await prepareExportCanvas();
+    if(!c){ showError('请先合成频闪照片'); return; }
     const a=document.createElement('a');
     a.download='strobe_preview_'+Date.now()+'.png';
-    a.href=previewCanvas.toDataURL('image/png');
+    a.href=c.toDataURL('image/png');
     a.click();
 };
 
-$('downloadBtn').onclick=()=>{
-    updatePreview();
+$('downloadBtn').onclick=async()=>{
+    const c=await prepareExportCanvas();
+    if(!c){ showError('请先合成频闪照片'); return; }
     const a=document.createElement('a');
     a.download='strobe_'+Date.now()+'.png';
-    a.href=previewCanvas.toDataURL('image/png');
+    a.href=c.toDataURL('image/png');
     a.click();
 };
 
@@ -1069,12 +1155,14 @@ function showError(m){$('errorMsg').innerHTML=m;$('errorMsg').style.display='blo
 function hideError(){$('errorMsg').style.display='none'}
 
 // ============ 分享到广场 ============
-$('shareToGalleryBtn').onclick=()=>{
+$('shareToGalleryBtn').onclick=async()=>{
     if(resultArea.style.display==='none'){alert('请先合成频闪照片再分享');return}
     // 确保预览是最新的
     updatePreview();
-    // 获取合成图 data URL
-    const imageDataUrl=previewCanvas.toDataURL('image/png');
+    // 获取合成图 data URL（按会员状态决定是否带水印）
+    const exportCanvas=await prepareExportCanvas();
+    if(!exportCanvas){ showError('请先合成频闪照片'); return; }
+    const imageDataUrl=exportCanvas.toDataURL('image/png');
     // 获取项目数据（复用 saveProject 的逻辑）
     const framesData=extractedAutoFrames.map((f,i)=>{
         const tc=document.createElement('canvas');
