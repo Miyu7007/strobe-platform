@@ -487,10 +487,19 @@ function handleFile(file){
     }
     status.textContent='加载视频中...';
     console.log('[handleFile] setting video.src, file:',file.name);
+    // 1) 嗅探 MP4 codec（async，可能得出 HEVC 结论 → 提前走引导面板）
+    sniffMp4Codec(file).then(codec=>{
+      if(codec==='hevc'){
+        showHevcHelpPanel(file.name);
+        // 还是让 video 加载，保持一致状态（用户点"重新上传"时 video 也已就绪）
+      }
+    });
     video.src=URL.createObjectURL(file);
     video.onloadedmetadata=async()=>{
         videoDuration=video.duration;endTime=videoDuration;startTime=0;
         status.textContent='✅ 时长: '+videoDuration.toFixed(1)+'s';
+        // 2) 黑屏探针：等了 1.2 秒后用 canvas 抽帧算亮度（HEVC 会无声失败：能 metadata、不能 frame decode）
+        setTimeout(()=>probeBlackFrames(file),1200);
         // 免费版：视频 > 15 秒必须升级会员或兑换「长视频」额度才能处理（不裁剪、直接阻止）
         if(!appState.isPro && videoDuration>15){
             let allowed=false;
@@ -524,6 +533,161 @@ function handleFile(file){
         showError('⚠️ 视频解码失败。文件后缀是 .'+ext+'，但内部编码（可能是 HEVC/H.265、MPEG-4 Part2 等）不被浏览器支持。<br><br><strong>解决方法：</strong>用格式工厂或 HandBrake 重新转码为 <strong>H.264 + AAC</strong> 的 MP4。<br><br>💡 <strong>快速检测方法：</strong>用 Windows Media Player 或 VLC 能否打开？如果 VLC 能打开但浏览器不行，几乎确定是编码问题。');
         status.textContent='❌ 加载失败';
     };
+
+// ============= 视频编码兼容检测 =============
+// 1) MP4 codec sniff：手写最小 MP4 box 解析器，扫 moov→trak→mdia→minf→stbl→stsd→首条 sample_description.fourcc
+// 返回 'hevc' / 'h264' / 'unknown'。不影响主流程（只用于提前提示）。
+async function sniffMp4Codec(file){
+  try{
+    const head=Math.min(file.size, 4*1024*1024); // 仅读前 4MB（moov 通常在这里）
+    const buf=await file.slice(0,head).arrayBuffer();
+    const dv=new DataView(buf);
+    const findBoxes=(off,end,type)=>{
+      const hits=[];
+      let p=off;
+      while(p+8<=end){
+        let size=dv.getUint32(p);
+        const boxType=String.fromCharCode(dv.getUint8(p+4),dv.getUint8(p+5),dv.getUint8(p+6),dv.getUint8(p+7));
+        if(size===1){ // largesize
+          // 64-bit size, but we only readed 4MB so skip if exceeds
+          p+=16; continue;
+        }
+        if(size<8 || p+size>end){break}
+        if(boxType===type) hits.push({off:p+8, end:p+size, size:size-8});
+        p+=size;
+      }
+      return hits;
+    };
+    const moovs=findBoxes(0,dv.byteLength,'moov');
+    if(!moovs.length) return 'unknown';
+    for(const moov of moovs){
+      const traks=findBoxes(moov.off,moov.end,'trak');
+      for(const trak of traks){
+        const mdias=findBoxes(trak.off,trak.end,'mdia');
+        for(const mdia of mdias){
+          // 先看 hdlr 检查是否是视频轨
+          const hdlrs=findBoxes(mdia.off,mdia.end,'hdlr');
+          let isVideo=false;
+          for(const h of hdlrs){
+            if(h.end-h.off>=12){
+              const handler=String.fromCharCode(dv.getUint8(h.off+8),dv.getUint8(h.off+9),dv.getUint8(h.off+10),dv.getUint8(h.off+11));
+              if(handler==='vide') isVideo=true;
+            }
+          }
+          if(!isVideo) continue;
+          const minfs=findBoxes(mdia.off,mdia.end,'minf');
+          for(const minf of minfs){
+            const stbls=findBoxes(minf.off,minf.end,'stbl');
+            for(const stbl of stbls){
+              const stsds=findBoxes(stbl.off,stbl.end,'stsd');
+              for(const stsd of stsds){
+                // stsd: 4 byte version/flags + 4 byte entry_count + entries
+                if(stsd.off+8>stsd.end) continue;
+                const entryCount=dv.getUint32(stsd.off+4);
+                let p=stsd.off+8;
+                for(let i=0;i<entryCount && p+8<=stsd.end;i++){
+                  const entrySize=dv.getUint32(p);
+                  const codecFourcc=String.fromCharCode(dv.getUint8(p+4),dv.getUint8(p+5),dv.getUint8(p+6),dv.getUint8(p+7));
+                  if(codecFourcc==='hvc1'||codecFourcc==='hev1') return 'hevc';
+                  if(codecFourcc==='avc1'||codecFourcc==='avc3') return 'h264';
+                  if(entrySize<8) break;
+                  p+=entrySize;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return 'unknown';
+  }catch(e){return 'unknown'}
+}
+
+// 2) 黑屏探针：metadata 加载后等一会抽当前帧算平均亮度。HEVC 会无声失败（能加载但帧全黑）。
+function probeBlackFrames(file){
+  if(!video || video.readyState<2) return;
+  try{
+    // 找一个非黑画面的时间点：开始、1/4、1/2、3/4
+    const pts=[0, videoDuration*0.25, videoDuration*0.5, videoDuration*0.75];
+    let tried=0; let lowBrightCount=0;
+    const cvs=document.createElement('canvas'); cvs.width=32; cvs.height=32;
+    const ctx=cvs.getContext('2d');
+    const check=(t)=>{
+      if(t>=videoDuration){finish(); return}
+      video.currentTime=t;
+      // 等帧渲染
+      setTimeout(()=>{
+        try{
+          ctx.drawImage(video,0,0,32,32);
+          const d=ctx.getImageData(0,0,32,32).data;
+          let sum=0;
+          for(let i=0;i<d.length;i+=4){sum+=(d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114)}
+          const avg=sum/(32*32);
+          if(avg<10) lowBrightCount++;
+        }catch(e){}
+        tried++;
+        if(tried>=pts.length) finish();
+      },150);
+    };
+    const finish=()=>{
+      if(lowBrightCount>=3){
+        // 4 帧全黑 → 几乎确定无声失败
+        showHevcHelpPanel(file.name);
+      }
+    };
+    pts.forEach(check);
+  }catch(e){}
+}
+
+// 3) HEVC / 无声失败 引导面板
+function showHevcHelpPanel(fileName){
+  const existing=document.getElementById('hevcHelpPanel');
+  if(existing){existing.style.display='block';return}
+  const card=document.createElement('div');
+  card.id='hevcHelpPanel';
+  card.style.cssText='margin:14px 0;padding:18px 20px;background:linear-gradient(135deg,#422006 0%,#1f1b2e 100%);border:2px solid #f59e0b;border-radius:14px;color:#fef3c7;font-size:14px;line-height:1.7';
+  card.innerHTML=`
+    <div style="font-size:18px;font-weight:bold;color:#fbbf24;margin-bottom:10px">⚠️ 视频可能无法解码（HEVC / H.265）</div>
+    <div style="margin-bottom:12px;color:#fde68a">
+      您的视频文件 <code style="background:#000;padding:2px 6px;border-radius:4px;color:#fbbf24;font-size:13px">${escapeHtml(fileName)}</code>
+      可能采用了 <strong>HEVC / H.265 编码</strong>。<br>
+      浏览器（Chrome/Edge/Firefox）只原生支持 <strong>H.264 (avc1)</strong>，HEVC 视频虽能读取时长但画面全黑。
+    </div>
+    <div style="font-size:13px;color:#fcd34d;margin-bottom:8px">📌 <strong>3 种转码方法（任选其一）：</strong></div>
+    <div style="margin-left:8px;color:#fef3c7">
+      <div style="margin-bottom:8px"><strong style="color:#fbbf24">① 免费最强 · HandBrake</strong>（Windows/Mac）<br>
+        <a href="https://handbrake.fr/downloads.php" target="_blank" style="color:#93c5fd;text-decoration:underline">下载 →</a>
+        打开视频 → 格式选 <strong>MP4</strong> → 视频编码 <strong>H.264 (x264)</strong> → <strong>Start</strong>
+      </div>
+      <div style="margin-bottom:8px"><strong style="color:#fbbf24">② 免费轻量 · VLC</strong><br>
+        媒体 → 转换/保存 → 配置文件选 <strong>Video - H.264 + MP3 (MP4)</strong> → 开始
+      </div>
+      <div style="margin-bottom:8px"><strong style="color:#fbbf24">③ 在线转码</strong>（文件 &lt; 100MB 时可用）<br>
+        <a href="https://cloudconvert.com/mp4-converter" target="_blank" style="color:#93c5fd;text-decoration:underline">cloudconvert.com →</a>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding:10px 12px;background:rgba(0,0,0,0.3);border-radius:8px;font-size:12.5px;color:#fde68a">
+      📱 <strong>iPhone 用户注意</strong>：设置 → 相机 → 格式 → <strong>兼容性最强 (H.264)</strong><br>
+      🤖 <strong>Android 用户注意</strong>：相机设置里切换到 <strong>高效 → H.264 优先</strong>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button id="hevcRetryBtn" style="padding:10px 18px;background:#10b981;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">📤 我已转码，重新上传</button>
+      <button id="hevcIgnoreBtn" style="padding:10px 18px;background:transparent;color:#fde68a;border:1px solid rgba(253,230,138,0.3);border-radius:8px;cursor:pointer;font-size:13px">忽略，继续尝试处理</button>
+    </div>
+  `;
+  // 插入到 videoPreview 上方
+  const vp=document.getElementById('videoPreview');
+  if(vp&&vp.parentNode) vp.parentNode.insertBefore(card,vp);
+  else document.querySelector('.card')?.appendChild(card);
+
+  document.getElementById('hevcRetryBtn').onclick=()=>{
+    card.style.display='none';
+    fileInput.value=''; fileInput.click();
+  };
+  document.getElementById('hevcIgnoreBtn').onclick=()=>{card.style.display='none'};
+}
+
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
     resultArea.style.display='none';framesSelectArea.style.display='none';framesEditArea.style.display='none';
     $('modeSelector').style.display='none';$('projectBanner').style.display='none';
 }
