@@ -1184,10 +1184,13 @@ $('shareToGalleryBtn').onclick=async()=>{
     if(resultArea.style.display==='none'){alert('请先合成频闪照片再分享');return}
     // 确保预览是最新的
     updatePreview();
-    // 获取合成图 data URL（按会员状态决定是否带水印）
-    const exportCanvas=await prepareExportCanvas();
-    if(!exportCanvas){ showError('请先合成频闪照片'); return; }
-    const imageDataUrl=exportCanvas.toDataURL('image/png');
+    // 分享时存储「原始合成图」（不带水印）：水印在广场展示/下载时按会员状态动态叠加
+    // 这样 Pro 会员下载/查看得到的是干净原图，免费会员通过 CSS/Canvas 叠加水印
+    if(!lastComposite){ showError('请先合成频闪照片'); return; }
+    const rawCanvas=document.createElement('canvas');
+    rawCanvas.width=lastComposite.width; rawCanvas.height=lastComposite.height;
+    rawCanvas.getContext('2d').putImageData(lastComposite,0,0);
+    const imageDataUrl=rawCanvas.toDataURL('image/png');
     // 获取项目数据（复用 saveProject 的逻辑）
     const framesData=extractedAutoFrames.map((f,i)=>{
         const tc=document.createElement('canvas');
