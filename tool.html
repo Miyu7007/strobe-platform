@@ -473,17 +473,31 @@ function handleFile(file){
     video.onloadedmetadata=async()=>{
         videoDuration=video.duration;endTime=videoDuration;startTime=0;
         status.textContent='✅ 时长: '+videoDuration.toFixed(1)+'s';
-        // 免费版限制导入时长 ≤ 15 秒；若有「长视频」额度则消耗后放行
+        // 免费版：视频 > 15 秒必须升级会员或兑换「长视频」额度才能处理（不裁剪、直接阻止）
         if(!appState.isPro && videoDuration>15){
             let allowed=false;
             if(appState.longVideoImportsLeft>0){
                 const res=await requestParent('consume-longvideo');
-                if(res&&res.ok){ allowed=true; appState.longVideoImportsLeft=res.longVideoImportsLeft||0; }
+                if(res&&res.ok){ allowed=true; appState.longVideoImportsLeft=res.longVideoImportsLeft||0; updateMembershipBar(); }
             }
             if(!allowed){
-                endTime=15;startTime=0;
-                status.textContent='✅ 时长: '+videoDuration.toFixed(1)+'s（免费版仅取前15秒，升级或兑换「长视频」解锁全部）';
+                // 阻止处理：清空视频源、隐藏 UI、引导升级/兑换
+                video.pause(); video.removeAttribute('src'); video.load();
+                videoLoaded=false; selectedFile=null;
+                videoPreview.style.display='none';timeSelector.style.display='none';settings.style.display='none';
+                const mins=Math.floor(videoDuration/60), secs=Math.floor(videoDuration%60);
+                const durStr = mins>0 ? mins+'分'+secs+'秒' : videoDuration.toFixed(0)+'秒';
+                showError(
+                    '⚠️ <strong>视频时长 '+durStr+'，超过免费版 15 秒限制</strong><br><br>'+
+                    '本视频无法在免费版下处理。请选择以下方式之一解锁：<br>'+
+                    '① <a href="../pricing/" target="_blank" style="color:#a5b4fc;text-decoration:underline;font-weight:bold">升级会员</a> · 单次¥9.9 / 月卡¥29 / 年卡¥128（无水印+不限时长）<br>'+
+                    '② <a href="../profile/" target="_blank" style="color:#a5b4fc;text-decoration:underline;font-weight:bold">积分兑换「长视频」</a> · 80 积分/次（仅本次解锁）<br><br>'+
+                    '解锁后请重新上传此视频即可正常处理。'
+                );
+                status.textContent='❌ 视频过长（'+durStr+'），需升级或兑换';
+                return;
             }
+            status.textContent='✅ 时长: '+videoDuration.toFixed(1)+'s（已消耗长视频额度，剩余 '+appState.longVideoImportsLeft+' 次）';
         }
         videoPreview.style.display='block';timeSelector.style.display='block';settings.style.display='block';videoLoaded=true;
         updateTimeInputs();updateTimelineUI();updateVideoTimeDisplay();
@@ -1023,6 +1037,10 @@ function showResult(){
 $('savePreviewBtn').onclick=async()=>{
     const c=await prepareExportCanvas();
     if(!c){ showError('请先合成频闪照片'); return; }
+    if(!appState.isPro){
+        const ok=confirm('⚠️ 免费版导出的图片将带有 StrobeArt 水印（右下角）。\n\n如需去除水印：\n• 升级会员（/pricing/）\n• 或用 30 积分兑换「去水印」额度（/profile/）\n\n是否继续下载带水印的图片？');
+        if(!ok) return;
+    }
     const a=document.createElement('a');
     a.download='strobe_preview_'+Date.now()+'.png';
     a.href=c.toDataURL('image/png');
@@ -1032,6 +1050,10 @@ $('savePreviewBtn').onclick=async()=>{
 $('downloadBtn').onclick=async()=>{
     const c=await prepareExportCanvas();
     if(!c){ showError('请先合成频闪照片'); return; }
+    if(!appState.isPro){
+        const ok=confirm('⚠️ 免费版导出的图片将带有 StrobeArt 水印（右下角）。\n\n如需去除水印：\n• 升级会员（/pricing/）\n• 或用 30 积分兑换「去水印」额度（/profile/）\n\n是否继续下载带水印的图片？');
+        if(!ok) return;
+    }
     const a=document.createElement('a');
     a.download='strobe_'+Date.now()+'.png';
     a.href=c.toDataURL('image/png');
