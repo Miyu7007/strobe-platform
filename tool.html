@@ -459,6 +459,8 @@ let selectedBrushFrames=[]; // 自动模式选中的帧
 
 // 涂抹状态
 let isDrawing=false,isErasing=false,brushSize=20;
+// 涂抹节流：mousemove 仅入队最新点位；RAF tick 时统一绘制
+let pendingBrushPoint=null,lastBrushPoint=null,rafScheduled=false;
 
 // DOM 缓存
 // 注意：必须是函数声明而非 const 箭头函数，因为 updateMembershipBar() 在第 396 行就使用了 $，
@@ -755,7 +757,7 @@ extractBtn.onclick=async()=>{
                     // 自动模式数据
                     extractedAutoFrames.push({data:imageData,time,selected:true,_thumb:thumb});
                     // 涂抹模式数据
-                    extractedBrushFrames.push({imageData,data:imageData,mask,isBg:i===0,width:canvas.width,height:canvas.height});
+                    extractedBrushFrames.push({imageData,data:imageData,mask,isBg:i===0,width:canvas.width,height:canvas.height,maskPositiveCount:0,hasMask:false});
                     res();
                 };
                 video.onerror=()=>{clearTimeout(to);res()};
@@ -1007,15 +1009,26 @@ function createBrushTabs(){
 
 function updateBrushTabStyles(){
     document.querySelectorAll('.frame-tab').forEach((tab,i)=>{
-        tab.classList.remove('bg-tab','has-mask');
-        if(i===bgFrameIndex)tab.classList.add('bg-tab');
-        if(extractedBrushFrames[i].mask.some(v=>v>0))tab.classList.add('has-mask');
+        const f=extractedBrushFrames[i];
+        const needHasMask=f&&f.hasMask;
+        const needBg=i===bgFrameIndex;
+        const curHasMask=tab.classList.contains('has-mask');
+        const curBg=tab.classList.contains('bg-tab');
+        if(curHasMask!==needHasMask){
+            tab.classList.toggle('has-mask',needHasMask);
+        }
+        if(curBg!==needBg){
+            tab.classList.toggle('bg-tab',needBg);
+        }
     });
 }
 
 function updateBrushStatus(){
     $('bgFrameDisplay').textContent='帧'+(bgFrameIndex+1);
-    const m=extractedBrushFrames.filter((f,i)=>i!==bgFrameIndex&&f.mask.some(v=>v>0)).length;
+    let m=0;
+    for(let i=0;i<extractedBrushFrames.length;i++){
+        if(i!==bgFrameIndex && extractedBrushFrames[i].hasMask) m++;
+    }
     $('maskedCount').textContent=m;
 }
 
@@ -1037,37 +1050,151 @@ function showBrushFrame(index){
     }
 }
 
-// 涂抹事件
-$('editCanvas').onmousedown=e=>{isDrawing=true;isErasing=e.button===2;applyBrush(e)};
-$('editCanvas').onmousemove=e=>{if(isDrawing)applyBrush(e)};
-$('editCanvas').onmouseup=()=>isDrawing=false;
-$('editCanvas').onmouseleave=()=>isDrawing=false;
+// 涂抹事件（RAF 节流 + GPU 直绘 + 不每点全画扫描）
+$('editCanvas').onmousedown=e=>{
+    e.preventDefault();
+    isDrawing=true;
+    isErasing=e.button===2;
+    lastBrushPoint=null;
+    pendingBrushPoint=null;
+    applyBrush(e);
+};
+$('editCanvas').onmousemove=e=>{
+    if(!isDrawing) return;
+    applyBrush(e);
+};
+$('editCanvas').onmouseup=()=>{
+    if(!isDrawing) return;
+    isDrawing=false;
+    flushBrush(true);
+    lastBrushPoint=null;
+    pendingBrushPoint=null;
+    updateBrushTabStyles();
+    updateBrushStatus();
+};
+$('editCanvas').onmouseleave=()=>{isDrawing=false};
 $('editCanvas').oncontextmenu=e=>e.preventDefault();
-$('editCanvas').ontouchstart=e=>{e.preventDefault();isDrawing=true;isErasing=false;applyBrush(e.touches[0])};
-$('editCanvas').ontouchmove=e=>{e.preventDefault();if(isDrawing)applyBrush(e.touches[0])};
-$('editCanvas').ontouchend=()=>isDrawing=false;
+$('editCanvas').ontouchstart=e=>{
+    e.preventDefault();
+    isDrawing=true;
+    isErasing=false;
+    lastBrushPoint=null;
+    pendingBrushPoint=null;
+    applyBrush(e.touches[0]);
+};
+$('editCanvas').ontouchmove=e=>{
+    e.preventDefault();
+    if(isDrawing) applyBrush(e.touches[0]);
+};
+$('editCanvas').ontouchend=()=>{
+    if(!isDrawing) return;
+    isDrawing=false;
+    flushBrush(true);
+    lastBrushPoint=null;
+    pendingBrushPoint=null;
+    updateBrushTabStyles();
+    updateBrushStatus();
+};
 
 function applyBrush(e){
     const rect=editCanvas.getBoundingClientRect();
     const sx=editCanvas.width/rect.width,sy=editCanvas.height/rect.height;
     const x=(e.clientX-rect.left)*sx,y=(e.clientY-rect.top)*sy;
+    if(lastBrushPoint===null){
+        // 新 stroke 第一点：立即画（保证点下立即有反应）
+        paintBrushDot(x,y);
+        lastBrushPoint={x,y};
+        return;
+    }
+    pendingBrushPoint={x,y};
+    if(!rafScheduled){
+        rafScheduled=true;
+        requestAnimationFrame(flushBrush);
+    }
+}
+
+function flushBrush(sync){
+    rafScheduled=false;
+    const p=pendingBrushPoint;
+    if(!p) return;
+    pendingBrushPoint=null;
+    const lp=lastBrushPoint;
+    if(!lp){ paintBrushDot(p.x,p.y); lastBrushPoint=p; return; }
+    const dx=p.x-lp.x,dy=p.y-lp.y;
+    const dist=Math.hypot(dx,dy);
+    // 步距 = 画笔半径的 0.55 倍（在画布实际坐标系下），保证圆与圆之间无空隙
+    const rect=editCanvas.getBoundingClientRect();
+    const sx=editCanvas.width/rect.width;
+    const step=Math.max(1, brushSize*sx*0.55);
+    const steps=Math.max(1, Math.ceil(dist/step));
+    for(let i=1;i<=steps;i++){
+        const t=i/steps;
+        paintBrushDot(lp.x+dx*t, lp.y+dy*t);
+    }
+    lastBrushPoint=p;
+}
+
+function paintBrushDot(x,y){
     const frame=extractedBrushFrames[currentFrameIndex];
+    if(!frame) return;
+    const rect=editCanvas.getBoundingClientRect();
+    const sx=editCanvas.width/rect.width;
     const r=brushSize*sx;
-    for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
-        if(dx*dx+dy*dy<=r*r){
-            const px=Math.floor(x+dx),py=Math.floor(y+dy);
-            if(px>=0&&px<frame.width&&py>=0&&py<frame.height){
-                frame.mask[py*frame.width+px]=isErasing?0:1;
+    // mask 写入：仅扫描圆盘 bounding box + O(1) 维护 maskPositiveCount / hasMask
+    const minX=Math.max(0, Math.floor(x-r));
+    const minY=Math.max(0, Math.floor(y-r));
+    const maxX=Math.min(frame.width,  Math.ceil(x+r));
+    const maxY=Math.min(frame.height, Math.ceil(y+r));
+    const w=frame.width;
+    for(let py=minY; py<maxY; py++){
+        const rowBase=py*w;
+        for(let px=minX; px<maxX; px++){
+            const ddx=px+0.5-x, ddy=py+0.5-y;
+            if(ddx*ddx+ddy*ddy<=r*r){
+                const idx=rowBase+px;
+                if(isErasing){
+                    if(frame.mask[idx]===1){
+                        frame.mask[idx]=0;
+                        frame.maskPositiveCount--;
+                        if(frame.maskPositiveCount<=0){ frame.maskPositiveCount=0; frame.hasMask=false; }
+                    }
+                }else{
+                    if(frame.mask[idx]===0){
+                        frame.mask[idx]=1;
+                        frame.maskPositiveCount++;
+                        frame.hasMask=true;
+                    }
+                }
             }
         }
     }
-    showBrushFrame(currentFrameIndex);updateBrushTabStyles();updateBrushStatus();
+    // GPU 路径画绿色/红色覆盖圆（不读 back buffer，避免 get/putImageData 全画同步搬运）
+    editCtx.fillStyle = isErasing ? 'rgba(255,90,90,0.40)' : 'rgba(0,255,140,0.45)';
+    editCtx.beginPath();
+    editCtx.arc(x, y, r, 0, Math.PI*2);
+    editCtx.fill();
 }
 
 $('brushSize').oninput=()=>{brushSize=parseInt($('brushSize').value);$('brushSizeValue').textContent=brushSize};
 $('setBgBtn').onclick=()=>{extractedBrushFrames.forEach((f,i)=>f.isBg=i===currentFrameIndex);bgFrameIndex=currentFrameIndex;updateBrushTabStyles();updateBrushStatus();showBrushFrame(currentFrameIndex)};
-$('clearMaskBtn').onclick=()=>{extractedBrushFrames[currentFrameIndex].mask.fill(0);showBrushFrame(currentFrameIndex);updateBrushTabStyles();updateBrushStatus()};
-$('fillAllBtn').onclick=()=>{extractedBrushFrames[currentFrameIndex].mask.fill(1);showBrushFrame(currentFrameIndex);updateBrushTabStyles();updateBrushStatus()};
+$('clearMaskBtn').onclick=()=>{
+    const f=extractedBrushFrames[currentFrameIndex];
+    f.mask.fill(0);
+    f.maskPositiveCount=0;
+    f.hasMask=false;
+    showBrushFrame(currentFrameIndex);
+    updateBrushTabStyles();
+    updateBrushStatus();
+};
+$('fillAllBtn').onclick=()=>{
+    const f=extractedBrushFrames[currentFrameIndex];
+    f.mask.fill(1);
+    f.maskPositiveCount=f.mask.length;
+    f.hasMask=true;
+    showBrushFrame(currentFrameIndex);
+    updateBrushTabStyles();
+    updateBrushStatus();
+};
 $('helpBtn').onclick=()=>{$('editHint').style.display='block'};
 $('editCanvas').onclick=()=>{$('editHint').style.display='none'};
 $('editHint').onclick=e=>{e.stopPropagation();$('editHint').style.display='none'};
