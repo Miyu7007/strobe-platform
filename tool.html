@@ -1392,40 +1392,48 @@ $('shareToGalleryBtn').onclick=async()=>{
     // 分享时存储「原始合成图」（不带水印）：水印在广场展示/下载时按会员状态动态叠加
     // 这样 Pro 会员下载/查看得到的是干净原图，免费会员通过 CSS/Canvas 叠加水印
     if(!lastComposite){ showError('请先合成频闪照片'); return; }
-    const rawCanvas=document.createElement('canvas');
-    rawCanvas.width=lastComposite.width; rawCanvas.height=lastComposite.height;
-    rawCanvas.getContext('2d').putImageData(lastComposite,0,0);
-    const imageDataUrl=rawCanvas.toDataURL('image/png');
-    // 获取项目数据（复用 saveProject 的逻辑）
-    const framesData=extractedAutoFrames.map((f,i)=>{
-        const tc=document.createElement('canvas');
-        tc.width=f.data.width;tc.height=f.data.height;
-        tc.getContext('2d').putImageData(f.data,0,0);
-        return{
-            imageBase64:tc.toDataURL('image/jpeg',0.85),
-            time:f.time,selected:f.selected,
-            width:f.data.width,height:f.data.height,
-            mask:currentMode==='brush'&&extractedBrushFrames[i]?Array.from(extractedBrushFrames[i].mask):null,
-            isBg:currentMode==='brush'&&extractedBrushFrames[i]?extractedBrushFrames[i].isBg:false
-        };
-    });
-    const projectData={
-        version:'2.1',createdAt:new Date().toISOString(),
-        mode:currentMode,
-        frames:framesData,
-        bgFrameIndex:bgFrameIndex,
-        autoBgFrameIndex:currentMode==='auto'?autoBgFrameIndex:null,
-        settings:{frameCount:parseInt($('frameCount').value)||8,threshold:parseInt($('thresholdAuto').value)||20},
-        startTime,endTime
+    // 分享图：合成大图限制最大宽度 1600px，JPEG 0.85 有损压缩
+    // 体积比 PNG 小 5-10 倍、编码更快，显著缩短分享等待
+    const MAX_W = 1600;
+    const scale = Math.min(1, MAX_W / lastComposite.width);
+    const srcCanvas = document.createElement('canvas');
+    srcCanvas.width = lastComposite.width;
+    srcCanvas.height = lastComposite.height;
+    srcCanvas.getContext('2d').putImageData(lastComposite, 0, 0);
+    const rawCanvas = document.createElement('canvas');
+    rawCanvas.width = Math.max(1, Math.round(lastComposite.width * scale));
+    rawCanvas.height = Math.max(1, Math.round(lastComposite.height * scale));
+    rawCanvas.getContext('2d').drawImage(srcCanvas, 0, 0, rawCanvas.width, rawCanvas.height);
+    const imageDataUrl = rawCanvas.toDataURL('image/jpeg', 0.85);
+
+    // 项目数据：仅保留轻量元数据（帧时间/选中/尺寸），不再内嵌每帧 base64 原图与 brush mask
+    // —— 这是此前体积从 KB 暴涨到 MB 的根因。付费「无水印下载」依赖分享上传的合成图文件(image_path)，不依赖此处帧数据
+    const framesMeta = extractedAutoFrames.map((f) => ({
+      time: f.time,
+      selected: f.selected,
+      width: f.data.width,
+      height: f.data.height,
+    }));
+    const projectData = {
+      version: '2.1',
+      createdAt: new Date().toISOString(),
+      mode: currentMode,
+      frameCount: extractedAutoFrames.length,
+      frames: framesMeta,
+      bgFrameIndex: bgFrameIndex,
+      autoBgFrameIndex: currentMode === 'auto' ? autoBgFrameIndex : null,
+      settings: { frameCount: parseInt($('frameCount').value) || 8, threshold: parseInt($('thresholdAuto').value) || 20 },
+      startTime,
+      endTime,
     };
     // 通过 postMessage 发送给父窗口
     window.parent.postMessage({
-        type:'strobe-share',
-        imageDataUrl:imageDataUrl,
-        projectData:projectData,
-        frameCount:extractedAutoFrames.length,
-        mode:currentMode
-    },'*');
+      type: 'strobe-share',
+      imageDataUrl: imageDataUrl,
+      projectData: projectData,
+      frameCount: extractedAutoFrames.length,
+      mode: currentMode,
+    }, '*');
     // 显示等待提示
     status.textContent='⏳ 正在打开分享对话框...';
 };
