@@ -4,6 +4,202 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>频闪照片合成器</title>
+<script>
+// ====== i18n 引擎（中英双语，与父站共享 strobe-locale） ======
+(function(){
+  var STORAGE_KEY = 'strobe-locale';
+  var I18N = {
+    '频闪照片合成器': 'Strobe Photo Composer',
+    '上传视频 → 提取帧 → 自动检测或涂抹编辑 → 合成': 'Upload video → Extract frames → Auto-detect or brush-edit → Compose',
+    '📂 导入已有项目': '📂 Import Project',
+    '💾 保存项目': '💾 Save Project',
+    '📋 使用说明': '📋 Instructions',
+    '上传视频，提取帧后选择编辑模式': 'Upload a video, then choose an editing mode after frames are extracted',
+    '自动检测模式：用复选框选择帧，系统自动检测运动物体差异；可指定背景帧（未变化的像素以此帧为底色）': 'Auto Detection: tick frames to select; the system auto-detects moving-object differences. You can set a background frame (unchanged pixels use it as the base).',
+    '涂抹编辑模式：在每帧上手动涂抹绿色区域选定运动物体，并设置背景帧': 'Brush Edit: manually brush green areas on each frame to select the moving object, and set a background frame.',
+    '完成后点击「合成频闪照片」预览，支持拖动滑块逐步查看': 'After done, click "Compose Strobe Photo" to preview; drag the slider to step through frames.',
+    '点击或拖拽上传视频': 'Click or drag to upload a video',
+    '支持 MP4、WebM、MOV · 推荐 MP4': 'Supports MP4, WebM, MOV · MP4 recommended',
+    '⚠️ AVI/MKV 不支持，请转 MP4': '⚠️ AVI/MKV not supported, please convert to MP4',
+    '⏱️ 选择时间范围': '⏱️ Select Time Range',
+    '起': 'S',
+    '止': 'E',
+    '开始：': 'Start: ',
+    '结束：': 'End: ',
+    '选中时长：{s} 秒': 'Selected duration: {s} s',
+    '选中时长：0.00 秒': 'Selected duration: 0.00 s',
+    '提取帧数': 'Frame Count',
+    '🎞️ 提取帧': '🎞️ Extract Frames',
+    '准备中...': 'Preparing...',
+    '🎯 选择编辑模式': '🎯 Choose Editing Mode',
+    '⚡ 自动检测模式': '⚡ Auto Detection',
+    '复选框选帧，系统自动检测运动差异': 'Tick frames; the system auto-detects motion differences',
+    '🖌️ 涂抹编辑模式': '🖌️ Brush Edit',
+    '手动涂抹绿色区域选定运动物体': 'Manually brush green areas to select the moving object',
+    '📷 提取的帧（点击选择要合成的帧）': '📷 Extracted Frames (click to select frames to compose)',
+    '全选': 'Select All',
+    '取消': 'Clear',
+    '已选 0 帧': 'Selected 0 frames',
+    '已选 {n} 帧': 'Selected {n} frames',
+    '差异阈值': 'Diff Threshold',
+    '🌲 背景帧': '🌲 Background Frame',
+    '点击帧缩略图右上角的「设背景」按钮选择背景帧（未变化的像素以此帧为底色）': 'Click "Set BG" on a frame thumbnail to choose the background frame (unchanged pixels use it as the base).',
+    '中间帧（默认）': 'Middle frame (default)',
+    '🌲 设为背景': '🌲 Set as Background',
+    '✨ 合成频闪照片': '✨ Compose Strobe Photo',
+    '🖌️ 涂抹选择运动物体': '🖌️ Brush to Select Moving Object',
+    '画笔大小:': 'Brush Size:',
+    '背景帧:': 'Background:',
+    '已涂抹帧数:': 'Masked frames:',
+    '操作提示: 按住鼠标左键涂抹选择运动物体（右键擦除），绿色区域将被合成': 'Tip: Hold left mouse button to brush-select the moving object (right button erases); green areas will be composited.',
+    '👆 点击画面关闭此提示': '👆 Click the canvas to close this tip',
+    '🌲 设为背景帧': '🌲 Set as Background Frame',
+    '清除当前涂抹': 'Clear Current Brush',
+    '涂抹整个画面': 'Brush Whole Frame',
+    '❓ 帮助': '❓ Help',
+    '📸 频闪照片': '📸 Strobe Photo',
+    '🎚️ 帧预览控制': '🎚️ Frame Preview',
+    '显示帧数：': 'Frames to show: ',
+    '显示 0 / 0 帧': 'Showing 0 / 0 frames',
+    '显示 {a} / {b} 帧': 'Showing {a} / {b} frames',
+    '← 拖动滑块查看不同帧组合 →': '← Drag the slider to view different frame combinations →',
+    '差异阈值：': 'Diff Threshold: ',
+    '📥 保存当前预览': '📥 Save Current Preview',
+    '📥 下载完整合成图': '📥 Download Full Composite',
+    '🚀 分享到广场': '🚀 Share to Gallery',
+    '🔄 重新开始': '🔄 Restart',
+    // 水印弹窗
+    '免费版导出提示': 'Free Export Notice',
+    '免费版导出的图片将带有 StrobeArt 水印（右下角）。选择下方任一方式去除水印后，即可下载干净原图：': 'Free exports carry a StrobeArt watermark (bottom-right). Use either option below to remove it, then download the clean original:',
+    '① 升级会员（去 /pricing）': '① Upgrade Membership (go to /pricing)',
+    '单次 ¥9.9 / 月卡 ¥29 / 年卡 ¥128 —— 无水印 + 不限视频时长': 'Single ¥9.9 / Monthly ¥29 / Yearly ¥128 — watermark-free + unlimited video length',
+    '② 用 30 积分兑换「去水印」额度（去 /profile）': '② Redeem 30 points for "Watermark Removal" (go to /profile)',
+    '消耗 30 积分，本次导出即获无水印原图（额度用完需再次兑换）': 'Spend 30 points to get a watermark-free original this export (redeem again when used up)',
+    '仍下载带水印的图片': 'Still download watermarked image',
+    // 会员条
+    '👑 <strong>Pro 会员</strong> · 无水印 · 导入不限时长': '👑 <strong>Pro</strong> · watermark-free · unlimited import',
+    '🆓 免费版 · 导出带水印 · 导入≤15秒': '🆓 Free · watermarked export · import ≤15s',
+    '已兑换：': 'Redeemed: ',
+    '去水印×': 'WM-free ×',
+    '长视频×': 'Long video ×',
+    // 运行时消息
+    '加载视频中...': 'Loading video...',
+    '✅ 时长: {d}s': '✅ Duration: {d}s',
+    '❌ 视频过长（{dur}），需升级或兑换': '❌ Video too long ({dur}); please upgrade or redeem',
+    '✅ 时长: {d}s（已消耗长视频额度，剩余 {n} 次）': '✅ Duration: {d}s (long-video quota used, {n} left)',
+    '❌ 加载失败': '❌ Load failed',
+    '⚠️ {ext} 格式不支持，请转 MP4': '⚠️ {ext} format not supported, please convert to MP4',
+    '⚠️ 视频解码失败。文件后缀是 .{ext}，但内部编码（可能是 HEVC/H.265、MPEG-4 Part2 等）不被浏览器支持。<br><br><strong>解决方法：</strong>用格式工厂或 HandBrake 重新转码为 <strong>H.264 + AAC</strong> 的 MP4。<br><br>💡 <strong>快速检测方法：</strong>用 Windows Media Player 或 VLC 能否打开？如果 VLC 能打开但浏览器不行，几乎确定是编码问题。': '⚠️ Video decode failed. The file extension is .{ext}, but its internal codec (possibly HEVC/H.265, MPEG-4 Part2, etc.) is not supported by the browser.<br><br><strong>Solution:</strong> re-encode to <strong>H.264 + AAC</strong> MP4 using Format Factory or HandBrake.<br><br>💡 <strong>Quick check:</strong> can Windows Media Player or VLC open it? If VLC opens it but the browser cannot, it is almost certainly a codec issue.',
+    '请先上传视频': 'Please upload a video first',
+    '提取帧中...': 'Extracting frames...',
+    '提取帧 {i}/{n} ({t}s)': 'Extracting frame {i}/{n} ({t}s)',
+    '✅ 提取完成！共{n}帧': '✅ Extraction done! {n} frames',
+    '没有成功提取任何帧': 'No frames were extracted successfully',
+    '提取失败:{msg}': 'Extraction failed: {msg}',
+    '❌ 未提取任何帧\n\n请先提取帧后再切换到涂抹模式': '❌ No frames extracted\n\nPlease extract frames before switching to brush mode',
+    '请至少选2帧': 'Please select at least 2 frames',
+    '⏳ 合成中...': '⏳ Composing...',
+    '⏳ 正在计算，请稍候（帧数越多越慢）...': '⏳ Computing, please wait (more frames = slower)...',
+    '✅ 合成完成！': '✅ Composition done!',
+    '合成失败:{msg}': 'Composition failed: {msg}',
+    '❌ 未找到背景帧\n\nbgFrameIndex={i}\n请检查提取帧是否成功': '❌ Background frame not found\n\nbgFrameIndex={i}\nPlease check if frame extraction succeeded',
+    '❌ 未找到背景帧（bgFrameIndex={i}）': '❌ Background frame not found (bgFrameIndex={i})',
+    '❌ 请先在非背景帧上涂抹选择运动区域\n\n提示：\n1）点击非背景帧的标签\n2）按住鼠标左键涂抹绿色区域': '❌ Please brush-select the moving area on a non-background frame first\n\nTips:\n1) Click the tab of a non-background frame\n2) Hold left mouse button to brush the green area',
+    '❌ 请先在非背景帧上涂抹选择运动区域。<br>提示：1）切换到非背景帧 2）按住鼠标左键涂抹绿色区域': '❌ Please brush-select the moving area on a non-background frame first.<br>Tips: 1) Switch to a non-background frame 2) Hold left mouse button to brush the green area',
+    '❌ 收集涂抹帧失败': '❌ Failed to collect brushed frames',
+    '❌ 合成失败：{msg}\n\n请打开F12控制台查看详细信息': '❌ Composition failed: {msg}\n\nOpen the F12 console for details',
+    '❌ 合成失败：{msg}<br>请打开F12控制台查看详细信息': '❌ Composition failed: {msg}<br>Open the F12 console for details',
+    '请先合成频闪照片再分享': 'Please compose a strobe photo before sharing',
+    '请先合成频闪照片': 'Please compose a strobe photo first',
+    '⏳ 正在打开分享对话框...': '⏳ Opening share dialog...',
+    '🎉 分享成功！\n\n{message}': '🎉 Share successful!\n\n{message}',
+    '❌ 分享失败：\n\n{message}': '❌ Share failed:\n\n{message}',
+    '✅ 项目已保存': '✅ Project saved',
+    '📦 已加载 · {n}帧 · {date}': '📦 Loaded · {n} frames · {date}',
+    '加载项目中...': 'Loading project...',
+    '无效的项目文件': 'Invalid project file',
+    '加载项目失败: {msg}': 'Failed to load project: {msg}',
+    '✅ 项目已加载：{n}帧（{mode}）': '✅ Project loaded: {n} frames ({mode})',
+    '视频时长 {dur}，超过免费版 15 秒限制': 'Video duration {dur} exceeds the free 15s limit',
+    '本视频无法在免费版下处理。请选择以下方式之一解锁：': 'This video cannot be processed on the free plan. Unlock via one of the following:',
+    '升级会员': 'Upgrade Membership',
+    '单次¥9.9 / 月卡¥29 / 年卡¥128（无水印+不限时长）': 'Single ¥9.9 / Monthly ¥29 / Yearly ¥128 (watermark-free + unlimited)',
+    '积分兑换「长视频」': 'Redeem points for "Long Video"',
+    '80 积分/次（仅本次解锁）': '80 points per use (unlocks this time only)',
+    '解锁后请重新上传此视频即可正常处理。': 'After unlocking, re-upload this video to process normally.',
+    '🌲 背景帧：{n}（未变化的像素以此帧为底色）': '🌲 Background frame: {n} (unchanged pixels use it as the base)',
+    '点击帧缩略图上的「设背景」按钮选择背景帧（未变化像素将以中间帧为底色）': 'Click "Set BG" on a frame thumbnail to choose the background frame (unchanged pixels use the middle frame as base)',
+    '背景帧重置为默认（中间帧）': 'Background frame reset to default (middle frame)',
+    '✅ 背景帧已设为帧{n}': '✅ Background frame set to frame {n}',
+    '帧{n} | {t}s': 'Frame {n} | {t}s',
+    '设背景': 'Set BG',
+    '背': 'BG',
+    '背景帧 (帧{n})': 'Background frame (frame {n})',
+    '帧{n} 的涂抹区域': "Frame {n}'s brushed area",
+    '帧{n}': 'Frame {n}',
+    // HEVC 引导
+    '⚠️ 视频可能无法解码（HEVC / H.265）': '⚠️ Video may fail to decode (HEVC / H.265)',
+    '您的视频文件 {name} 可能采用了 <strong>HEVC / H.265 编码</strong>。<br>浏览器（Chrome/Edge/Firefox）只原生支持 <strong>H.264 (avc1)</strong>，HEVC 视频虽能读取时长但画面全黑。': 'Your video file {name} may use <strong>HEVC / H.265</strong>.<br>Browsers (Chrome/Edge/Firefox) only natively support <strong>H.264 (avc1)</strong>; HEVC videos can read duration but show a black screen.',
+    '📌 <strong>3 种转码方法（任选其一）：</strong>': '📌 <strong>3 transcode methods (pick one):</strong>',
+    '① 免费最强 · HandBrake（Windows/Mac）<br>打开视频 → 格式选 <strong>MP4</strong> → 视频编码 <strong>H.264 (x264)</strong> → <strong>Start</strong>': '① Free & powerful · HandBrake (Windows/Mac)<br>Open video → Format <strong>MP4</strong> → Video codec <strong>H.264 (x264)</strong> → <strong>Start</strong>',
+    '② 免费轻量 · VLC<br>媒体 → 转换/保存 → 配置文件选 <strong>Video - H.264 + MP3 (MP4)</strong> → 开始': '② Free & light · VLC<br>Media → Convert/Save → Profile <strong>Video - H.264 + MP3 (MP4)</strong> → Start',
+    '③ 在线转码（文件 &lt; 100MB 时可用）': '③ Online transcode (for files &lt; 100MB)',
+    '📱 iPhone 用户注意：设置 → 相机 → 格式 → <strong>兼容性最强 (H.264)</strong>': '📱 iPhone users: Settings → Camera → Formats → <strong>Most Compatible (H.264)</strong>',
+    '🤖 Android 用户注意：相机设置里切换到 <strong>高效 → H.264 优先</strong>': '🤖 Android users: in camera settings switch to <strong>High Efficiency → H.264 preferred</strong>',
+    '📤 我已转码，重新上传': '📤 I\'ve transcoded, re-upload',
+    '忽略，继续尝试处理': 'Ignore and keep trying',
+    '打开视频 → 格式选 <strong>MP4</strong> → 视频编码 <strong>H.264 (x264)</strong> → <strong>Start</strong>': 'Open video → Format <strong>MP4</strong> → Video codec <strong>H.264 (x264)</strong> → <strong>Start</strong>',
+    '媒体 → 转换/保存 → 配置文件选 <strong>Video - H.264 + MP3 (MP4)</strong> → 开始': 'Media → Convert/Save → Profile <strong>Video - H.264 + MP3 (MP4)</strong> → Start'
+  };
+  function getToolLocale(){ try { return localStorage.getItem(STORAGE_KEY) || 'zh'; } catch(e){ return 'zh'; } }
+  function setToolLocale(l){
+    try { localStorage.setItem(STORAGE_KEY, l); } catch(e){}
+    if (typeof document !== 'undefined') document.documentElement.lang = (l === 'en' ? 'en' : 'zh-CN');
+    applyToolI18n();
+  }
+  function t(key, vars){
+    var s = (getToolLocale() === 'en' && I18N[key] != null) ? I18N[key] : key;
+    if (vars) { for (var k in vars) { if (Object.prototype.hasOwnProperty.call(vars, k)) { s = s.split('{' + k + '}').join(vars[k] == null ? '' : String(vars[k])); } } }
+    return s;
+  }
+  function applyToolI18n(){
+    var loc = getToolLocale();
+    if (typeof document !== 'undefined') document.title = t('频闪照片合成器');
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      el.textContent = t(el.getAttribute('data-i18n'));
+    }
+    // 动态区域（如会员条）随语言刷新
+    if (typeof updateMembershipBar === 'function') { try { updateMembershipBar(); } catch(e){} }
+    var zh = document.getElementById('langZh'), en = document.getElementById('langEn');
+    if (zh) zh.classList.toggle('active', loc === 'zh');
+    if (en) en.classList.toggle('active', loc === 'en');
+  }
+  // 暴露给主脚本
+  window.t = t;
+  window.getToolLocale = getToolLocale;
+  window.setToolLocale = setToolLocale;
+  // 语言切换器
+  function buildSwitcher(){
+    var d = document.createElement('div');
+    d.id = 'langSwitcher';
+    d.innerHTML = '<button id="langZh" class="ls-btn">中文</button><button id="langEn" class="ls-btn">EN</button>';
+    d.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;display:flex;gap:4px;background:rgba(0,0,0,0.45);padding:4px;border-radius:8px;backdrop-filter:blur(4px)';
+    document.body.appendChild(d);
+    var st = document.createElement('style');
+    st.textContent = '#langSwitcher .ls-btn{background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer}#langSwitcher .ls-btn.active{background:#667eea;color:#fff;border-color:#667eea}';
+    document.head.appendChild(st);
+    document.getElementById('langZh').onclick = function(){ setToolLocale('zh'); };
+    document.getElementById('langEn').onclick = function(){ setToolLocale('en'); };
+    applyToolI18n();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildSwitcher);
+  else buildSwitcher();
+  // 父站切换语言时同步
+  window.addEventListener('storage', function(e){ if (e.key === STORAGE_KEY) applyToolI18n(); });
+})();
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);color:#fff;min-height:100vh;padding:20px}
@@ -179,34 +375,34 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
 <div class="container">
 <h1>🎬 频闪照片合成器</h1>
 <div style="font-size:0.8rem;color:#999;text-align:center;line-height:1.6;margin-top:-10px;margin-bottom:10px;">开发者：俞俊雄<br>Email:584273654@qq.com</div>
-<p class="subtitle">上传视频 → 提取帧 → 自动检测或涂抹编辑 → 合成</p>
+<p class="subtitle" data-i18n="上传视频 → 提取帧 → 自动检测或涂抹编辑 → 合成">上传视频 → 提取帧 → 自动检测或涂抹编辑 → 合成</p>
 <div id="membershipBar" style="text-align:center;font-size:13px;margin-bottom:14px;color:#a5b4fc;"></div>
 
 <!-- 项目管理 Banner -->
 <div class="project-banner" id="projectBanner">
-<button class="btn btn-purple" id="importProjectBtn">📂 导入已有项目</button>
+<button class="btn btn-purple" id="importProjectBtn" data-i18n="📂 导入已有项目">📂 导入已有项目</button>
 <input type="file" id="importProjectInput" accept=".strobeproj" class="hidden-file-input">
-<button class="btn btn-success" id="saveProjectBtn" style="display:none;">💾 保存项目</button>
+<button class="btn btn-success" id="saveProjectBtn" style="display:none;" data-i18n="💾 保存项目">💾 保存项目</button>
 <span class="project-loaded-info" id="projectLoadedInfo"></span>
 </div>
 
 <div class="card">
 <!-- 模式说明 -->
 <div class="instruction-box" id="instructionBox">
-<h5>📋 使用说明</h5>
+<h5 data-i18n="📋 使用说明">📋 使用说明</h5>
 <ol>
-<li>上传视频，提取帧后选择编辑模式</li>
-<li><strong>自动检测模式：</strong>用复选框选择帧，系统自动检测运动物体差异；<strong style="color:#fcd34d;">可指定背景帧</strong>（未变化的像素以此帧为底色）</li>
-<li><strong>涂抹编辑模式：</strong>在每帧上手动涂抹绿色区域选定运动物体，并设置背景帧</li>
-<li>完成后点击「合成频闪照片」预览，支持拖动滑块逐步查看</li>
+<li data-i18n="上传视频，提取帧后选择编辑模式">上传视频，提取帧后选择编辑模式</li>
+<li data-i18n="自动检测模式：用复选框选择帧，系统自动检测运动物体差异；可指定背景帧（未变化的像素以此帧为底色）">自动检测模式：用复选框选择帧，系统自动检测运动物体差异；可指定背景帧（未变化的像素以此帧为底色）</li>
+<li data-i18n="涂抹编辑模式：在每帧上手动涂抹绿色区域选定运动物体，并设置背景帧">涂抹编辑模式：在每帧上手动涂抹绿色区域选定运动物体，并设置背景帧</li>
+<li data-i18n="完成后点击「合成频闪照片」预览，支持拖动滑块逐步查看">完成后点击「合成频闪照片」预览，支持拖动滑块逐步查看</li>
 </ol>
 </div>
 
 <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
 <div class="upload-icon">📁</div>
-<div>点击或拖拽上传视频</div>
-<div style="font-size:12px;color:#888;margin-top:4px">支持 MP4、WebM、MOV · 推荐 MP4</div>
-<div class="format-warning" style="margin-top:10px"><strong>⚠️</strong> AVI/MKV 不支持，请转 MP4</div>
+<div data-i18n="点击或拖拽上传视频">点击或拖拽上传视频</div>
+<div style="font-size:12px;color:#888;margin-top:4px" data-i18n="支持 MP4、WebM、MOV · 推荐 MP4">支持 MP4、WebM、MOV · 推荐 MP4</div>
+<div class="format-warning" style="margin-top:10px" data-i18n="⚠️ AVI/MKV 不支持，请转 MP4">⚠️ AVI/MKV 不支持，请转 MP4</div>
 </div>
 <input type="file" id="fileInput" accept="video/*">
 <div class="status" id="status"></div>
@@ -223,46 +419,46 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
 </div>
 
 <div class="time-selector" id="timeSelector">
-<h4>⏱️ 选择时间范围</h4>
+<h4 data-i18n="⏱️ 选择时间范围">⏱️ 选择时间范围</h4>
 <div class="timeline-container" id="timelineContainer">
 <div class="timeline-track"></div>
 <div class="timeline-range" id="timelineRange"></div>
-<div class="timeline-handle" id="handleStart">起</div>
-<div class="timeline-handle" id="handleEnd">止</div>
+<div class="timeline-handle" id="handleStart" data-i18n="起">起</div>
+<div class="timeline-handle" id="handleEnd" data-i18n="止">止</div>
 </div>
 <div class="time-inputs">
-<div class="time-input-group"><label>开始：</label><input type="text" id="startTimeInput" value="0.00"></div>
-<div class="time-input-group"><label>结束：</label><input type="text" id="endTimeInput" value="0.00"></div>
+<div class="time-input-group"><label data-i18n="开始：">开始：</label><input type="text" id="startTimeInput" value="0.00"></div>
+<div class="time-input-group"><label data-i18n="结束：">结束：</label><input type="text" id="endTimeInput" value="0.00"></div>
 </div>
-<div class="duration-display" id="durationDisplay">选中时长：0.00 秒</div>
+<div class="duration-display" id="durationDisplay" data-i18n="选中时长：0.00 秒">选中时长：0.00 秒</div>
 </div>
 
 <div class="settings" id="settings">
 <div class="setting-row">
-<label>提取帧数</label>
+<label data-i18n="提取帧数">提取帧数</label>
 <input type="number" id="frameCount" value="8" min="2" max="20">
 </div>
-<button class="btn btn-primary" id="extractBtn">🎞️ 提取帧</button>
+<button class="btn btn-primary" id="extractBtn" data-i18n="🎞️ 提取帧">🎞️ 提取帧</button>
 </div>
 
 <div class="progress-bar" id="progressBar">
 <div class="progress-track"><div class="progress-fill" id="extractProgressFill"></div></div>
-<div class="progress-text" id="progressText">准备中...</div>
+<div class="progress-text" id="progressText" data-i18n="准备中...">准备中...</div>
 </div>
 <div class="error-msg" id="errorMsg"></div>
 </div>
 
 <!-- 模式切换 -->
 <div class="card mode-selector" id="modeSelector">
-<h4>🎯 选择编辑模式</h4>
+<h4 data-i18n="🎯 选择编辑模式">🎯 选择编辑模式</h4>
 <div class="mode-buttons">
 <div class="mode-btn active" id="modeAuto">
-<div>⚡ 自动检测模式</div>
-<div class="mode-desc">复选框选帧，系统自动检测运动差异</div>
+<div data-i18n="⚡ 自动检测模式">⚡ 自动检测模式</div>
+<div class="mode-desc" data-i18n="复选框选帧，系统自动检测运动差异">复选框选帧，系统自动检测运动差异</div>
 </div>
 <div class="mode-btn" id="modeBrush">
-<div>🖌️ 涂抹编辑模式</div>
-<div class="mode-desc">手动涂抹绿色区域选定运动物体</div>
+<div data-i18n="🖌️ 涂抹编辑模式">🖌️ 涂抹编辑模式</div>
+<div class="mode-desc" data-i18n="手动涂抹绿色区域选定运动物体">手动涂抹绿色区域选定运动物体</div>
 </div>
 </div>
 </div>
@@ -270,79 +466,79 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
 <!-- 自动模式：帧选择区 -->
 <div class="card frames-select-area" id="framesSelectArea">
 <div class="frames-select-header">
-<h4>📷 提取的帧（点击选择要合成的帧）</h4>
+<h4 data-i18n="📷 提取的帧（点击选择要合成的帧）">📷 提取的帧（点击选择要合成的帧）</h4>
 <div class="frames-select-actions">
-<button class="btn btn-secondary btn-small" id="selectAllBtn">全选</button>
-<button class="btn btn-secondary btn-small" id="selectNoneBtn">取消</button>
-<span class="selected-count" id="selectedCount">已选 0 帧</span>
+<button class="btn btn-secondary btn-small" id="selectAllBtn" data-i18n="全选">全选</button>
+<button class="btn btn-secondary btn-small" id="selectNoneBtn" data-i18n="取消">取消</button>
+<span class="selected-count" id="selectedCount" data-i18n="已选 0 帧">已选 0 帧</span>
 </div>
 </div>
 <div class="frames-grid" id="framesGrid"></div>
 <div class="setting-row" style="margin-top:16px">
-<label>差异阈值</label>
+<label data-i18n="差异阈值">差异阈值</label>
 <input type="number" id="thresholdAuto" value="20" min="5" max="100" style="width:80px">
 </div>
 <div class="setting-row" style="margin-top:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px 12px;">
-<label style="min-width:auto;color:#fcd34d;">🌲 背景帧</label>
-<span style="font-size:11px;color:#aaa;flex:1;" id="autoBgHint">点击帧缩略图右上角的「设背景」按钮选择背景帧（未变化的像素以此帧为底色）</span>
+<label style="min-width:auto;color:#fcd34d;" data-i18n="🌲 背景帧">🌲 背景帧</label>
+<span style="font-size:11px;color:#aaa;flex:1;" id="autoBgHint" data-i18n="点击帧缩略图右上角的「设背景」按钮选择背景帧（未变化的像素以此帧为底色）">点击帧缩略图右上角的「设背景」按钮选择背景帧（未变化的像素以此帧为底色）</span>
 <select id="autoBgFrameSelect" style="padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:13px;min-width:90px;">
-<option value="-1">中间帧（默认）</option>
+<option value="-1" data-i18n="中间帧（默认）">中间帧（默认）</option>
 </select>
-<button class="btn btn-warning btn-small" id="autoBgFrameBtn" style="display:none;">🌲 设为背景</button>
+<button class="btn btn-warning btn-small" id="autoBgFrameBtn" style="display:none;" data-i18n="🌲 设为背景">🌲 设为背景</button>
 </div>
 <div style="margin-top:16px;text-align:center">
-<button class="btn btn-primary" id="composeAutoBtn">✨ 合成频闪照片</button>
+<button class="btn btn-primary" id="composeAutoBtn" data-i18n="✨ 合成频闪照片">✨ 合成频闪照片</button>
 </div>
 </div>
 
 <!-- 涂抹模式：帧编辑区 -->
 <div class="card frames-edit-area" id="framesEditArea">
 <div class="frames-edit-header">
-<h4>🖌️ 涂抹选择运动物体</h4>
+<h4 data-i18n="🖌️ 涂抹选择运动物体">🖌️ 涂抹选择运动物体</h4>
 <div class="brush-controls">
 <div class="brush-size-control">
-<label>画笔大小:</label>
+<label data-i18n="画笔大小:">画笔大小:</label>
 <input type="range" id="brushSize" min="5" max="50" value="20">
 <span id="brushSizeValue">20</span>
 </div>
 </div>
 </div>
 <div class="status-bar" id="statusBar">
-背景帧: <strong id="bgFrameDisplay">帧1</strong> |
-已涂抹帧数: <strong id="maskedCount">0</strong>
+<span data-i18n="背景帧:"></span> <strong id="bgFrameDisplay">帧1</strong> |
+<span data-i18n="已涂抹帧数:"></span> <strong id="maskedCount">0</strong>
 </div>
 <div class="frames-tabs" id="framesTabs"></div>
 <div class="edit-canvas-container">
 <canvas id="editCanvas"></canvas>
 <div class="edit-hint" id="editHint" style="display:block;cursor:pointer;">
-<strong>操作提示:</strong> 按住鼠标左键涂抹选择运动物体（右键擦除），绿色区域将被合成
-<div style="font-size:11px;margin-top:4px;color:#10b981;">👆 点击画面关闭此提示</div>
+<span data-i18n="操作提示: 按住鼠标左键涂抹选择运动物体（右键擦除），绿色区域将被合成"></span>
+<div style="font-size:11px;margin-top:4px;color:#10b981;" data-i18n="👆 点击画面关闭此提示">👆 点击画面关闭此提示</div>
 </div>
 </div>
 <div class="edit-actions">
-<button class="btn btn-warning btn-small" id="setBgBtn">🌲 设为背景帧</button>
-<button class="btn btn-secondary btn-small" id="clearMaskBtn">清除当前涂抹</button>
-<button class="btn btn-secondary btn-small" id="fillAllBtn">涂抹整个画面</button>
-<button class="btn btn-secondary btn-small" id="helpBtn">❓ 帮助</button>
-<button class="btn btn-primary" id="composeBrushBtn">✨ 合成频闪照片</button>
+<button class="btn btn-warning btn-small" id="setBgBtn" data-i18n="🌲 设为背景帧">🌲 设为背景帧</button>
+<button class="btn btn-secondary btn-small" id="clearMaskBtn" data-i18n="清除当前涂抹">清除当前涂抹</button>
+<button class="btn btn-secondary btn-small" id="fillAllBtn" data-i18n="涂抹整个画面">涂抹整个画面</button>
+<button class="btn btn-secondary btn-small" id="helpBtn" data-i18n="❓ 帮助">❓ 帮助</button>
+<button class="btn btn-primary" id="composeBrushBtn" data-i18n="✨ 合成频闪照片">✨ 合成频闪照片</button>
 </div>
 </div>
 
 <!-- 结果区 -->
 <div class="card result-area" id="resultArea">
 <div class="result-header">
-<h3>📸 频闪照片</h3>
+<h3 data-i18n="📸 频闪照片">📸 频闪照片</h3>
 <div style="display:flex;gap:8px;flex-wrap:wrap;">
-<button class="btn btn-success btn-small" id="saveProjectBtn2">💾 保存项目</button>
+<button class="btn btn-success btn-small" id="saveProjectBtn2" data-i18n="💾 保存项目">💾 保存项目</button>
 </div>
 </div>
 <div class="result-image-container">
 <canvas id="previewCanvas"></canvas>
 </div>
 <div class="preview-section">
-<h4>🎚️ 帧预览控制</h4>
+<h4 data-i18n="🎚️ 帧预览控制">🎚️ 帧预览控制</h4>
 <div class="preview-controls">
-<label>显示帧数：</label>
+<label data-i18n="显示帧数：">显示帧数：</label>
 <div class="frame-slider-container">
 <div class="frame-slider-track"></div>
 <div class="frame-slider-progress" id="frameSliderProgress"></div>
@@ -350,21 +546,21 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
 </div>
 </div>
 <div class="preview-info">
-<span id="previewCount">显示 0 / 0 帧</span>
-<span id="previewHint">← 拖动滑块查看不同帧组合 →</span>
+<span id="previewCount" data-i18n="显示 0 / 0 帧">显示 0 / 0 帧</span>
+<span id="previewHint" data-i18n="← 拖动滑块查看不同帧组合 →">← 拖动滑块查看不同帧组合 →</span>
 </div>
 <div class="frame-indicator" id="frameIndicator"></div>
 <div class="threshold-control" id="thresholdControlAuto" style="display:none;">
-<label>差异阈值：</label>
+<label data-i18n="差异阈值：">差异阈值：</label>
 <input type="range" id="previewThreshold" min="0" max="100" value="20">
 <span class="threshold-value" id="thresholdValue">20</span>
 </div>
 </div>
 <div class="result-actions">
-<button class="btn btn-success save-preview-btn" id="savePreviewBtn">📥 保存当前预览</button>
-<button class="btn btn-primary" id="downloadBtn">📥 下载完整合成图</button>
-<button class="btn btn-purple" id="shareToGalleryBtn" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;">🚀 分享到广场</button>
-<button class="btn btn-secondary" id="resetBtn">🔄 重新开始</button>
+<button class="btn btn-success save-preview-btn" id="savePreviewBtn" data-i18n="📥 保存当前预览">📥 保存当前预览</button>
+<button class="btn btn-primary" id="downloadBtn" data-i18n="📥 下载完整合成图">📥 下载完整合成图</button>
+<button class="btn btn-purple" id="shareToGalleryBtn" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;" data-i18n="🚀 分享到广场">🚀 分享到广场</button>
+<button class="btn btn-secondary" id="resetBtn" data-i18n="🔄 重新开始">🔄 重新开始</button>
 </div>
 </div>
 
@@ -413,12 +609,12 @@ postToParent({type:'strobe-ready'});
 function updateMembershipBar(){
   const bar=$('membershipBar'); if(!bar) return;
   if(appState.isPro){
-    bar.innerHTML='👑 <strong>Pro 会员</strong> · 无水印 · 导入不限时长';
+    bar.innerHTML=t('👑 <strong>Pro 会员</strong> · 无水印 · 导入不限时长');
   }else{
     const extra=[];
-    if(appState.watermarkExportsLeft>0) extra.push('去水印×'+appState.watermarkExportsLeft);
-    if(appState.longVideoImportsLeft>0) extra.push('长视频×'+appState.longVideoImportsLeft);
-    bar.innerHTML='🆓 免费版 · 导出带水印 · 导入≤15秒'+(extra.length?(' · 已兑换：'+extra.join(' / ')):'');
+    if(appState.watermarkExportsLeft>0) extra.push(t('去水印×')+appState.watermarkExportsLeft);
+    if(appState.longVideoImportsLeft>0) extra.push(t('长视频×')+appState.longVideoImportsLeft);
+    bar.innerHTML=t('🆓 免费版 · 导出带水印 · 导入≤15秒')+(extra.length?(' · '+t('已兑换：')+extra.join(' / ')):'');
   }
 }
 updateMembershipBar();
@@ -485,7 +681,7 @@ function handleFile(file){
     selectedFile=file;videoLoaded=false;hideError();
     const ext=file.name.split('.').pop().toLowerCase();
     if(['avi','mkv','flv','wmv','rmvb','rm'].includes(ext)){
-        showError('⚠️ '+ext.toUpperCase()+' 格式不支持，请转 MP4');return
+        showError(t('⚠️ {ext} 格式不支持，请转 MP4',{ext:ext.toUpperCase()}));return
     }
     status.textContent='加载视频中...';
     console.log('[handleFile] setting video.src, file:',file.name);
@@ -499,7 +695,7 @@ function handleFile(file){
     video.src=URL.createObjectURL(file);
     video.onloadedmetadata=async()=>{
         videoDuration=video.duration;endTime=videoDuration;startTime=0;
-        status.textContent='✅ 时长: '+videoDuration.toFixed(1)+'s';
+        status.textContent=t('✅ 时长: {d}s',{d:videoDuration.toFixed(1)});
         // 2) 黑屏探针：等了 1.2 秒后用 canvas 抽帧算亮度（HEVC 会无声失败：能 metadata、不能 frame decode）
         setTimeout(()=>probeBlackFrames(file),1200);
         // 免费版：视频 > 15 秒必须升级会员或兑换「长视频」额度才能处理（不裁剪、直接阻止）
@@ -517,23 +713,23 @@ function handleFile(file){
                 const mins=Math.floor(videoDuration/60), secs=Math.floor(videoDuration%60);
                 const durStr = mins>0 ? mins+'分'+secs+'秒' : videoDuration.toFixed(0)+'秒';
                 showError(
-                    '⚠️ <strong>视频时长 '+durStr+'，超过免费版 15 秒限制</strong><br><br>'+
-                    '本视频无法在免费版下处理。请选择以下方式之一解锁：<br>'+
-                    '① <a href="../pricing/" target="_blank" style="color:#a5b4fc;text-decoration:underline;font-weight:bold">升级会员</a> · 单次¥9.9 / 月卡¥29 / 年卡¥128（无水印+不限时长）<br>'+
-                    '② <a href="../profile/" target="_blank" style="color:#a5b4fc;text-decoration:underline;font-weight:bold">积分兑换「长视频」</a> · 80 积分/次（仅本次解锁）<br><br>'+
-                    '解锁后请重新上传此视频即可正常处理。'
+                    '⚠️ <strong>'+t('视频时长 {dur}，超过免费版 15 秒限制',{dur:durStr})+'</strong><br><br>'+
+                    t('本视频无法在免费版下处理。请选择以下方式之一解锁：')+'<br>'+
+                    '① <a href="../pricing/" target="_blank" style="color:#a5b4fc;text-decoration:underline;font-weight:bold">'+t('升级会员')+'</a> · '+t('单次¥9.9 / 月卡¥29 / 年卡¥128（无水印+不限时长）')+'<br>'+
+                    '② <a href="../profile/" target="_blank" style="color:#a5b4fc;text-decoration:underline;font-weight:bold">'+t('积分兑换「长视频」')+'</a> · '+t('80 积分/次（仅本次解锁）')+'<br><br>'+
+                    t('解锁后请重新上传此视频即可正常处理。')
                 );
-                status.textContent='❌ 视频过长（'+durStr+'），需升级或兑换';
+                status.textContent=t('❌ 视频过长（{dur}），需升级或兑换',{dur:durStr});
                 return;
             }
-            status.textContent='✅ 时长: '+videoDuration.toFixed(1)+'s（已消耗长视频额度，剩余 '+appState.longVideoImportsLeft+' 次）';
+            status.textContent=t('✅ 时长: {d}s（已消耗长视频额度，剩余 {n} 次）',{d:videoDuration.toFixed(1),n:appState.longVideoImportsLeft});
         }
         videoPreview.style.display='block';timeSelector.style.display='block';settings.style.display='block';videoLoaded=true;
         updateTimeInputs();updateTimelineUI();updateVideoTimeDisplay();
     };
     video.onerror=()=>{
-        showError('⚠️ 视频解码失败。文件后缀是 .'+ext+'，但内部编码（可能是 HEVC/H.265、MPEG-4 Part2 等）不被浏览器支持。<br><br><strong>解决方法：</strong>用格式工厂或 HandBrake 重新转码为 <strong>H.264 + AAC</strong> 的 MP4。<br><br>💡 <strong>快速检测方法：</strong>用 Windows Media Player 或 VLC 能否打开？如果 VLC 能打开但浏览器不行，几乎确定是编码问题。');
-        status.textContent='❌ 加载失败';
+        showError(t('⚠️ 视频解码失败。文件后缀是 .{ext}，但内部编码（可能是 HEVC/H.265、MPEG-4 Part2 等）不被浏览器支持。<br><br><strong>解决方法：</strong>用格式工厂或 HandBrake 重新转码为 <strong>H.264 + AAC</strong> 的 MP4。<br><br>💡 <strong>快速检测方法：</strong>用 Windows Media Player 或 VLC 能否打开？如果 VLC 能打开但浏览器不行，几乎确定是编码问题。',{ext:ext}));
+        status.textContent=t('❌ 加载失败');
     };
 
 // ============= 视频编码兼容检测 =============
@@ -649,32 +845,30 @@ function showHevcHelpPanel(fileName){
   card.id='hevcHelpPanel';
   card.style.cssText='margin:14px 0;padding:18px 20px;background:linear-gradient(135deg,#422006 0%,#1f1b2e 100%);border:2px solid #f59e0b;border-radius:14px;color:#fef3c7;font-size:14px;line-height:1.7';
   card.innerHTML=`
-    <div style="font-size:18px;font-weight:bold;color:#fbbf24;margin-bottom:10px">⚠️ 视频可能无法解码（HEVC / H.265）</div>
+    <div style="font-size:18px;font-weight:bold;color:#fbbf24;margin-bottom:10px">${t('⚠️ 视频可能无法解码（HEVC / H.265）')}</div>
     <div style="margin-bottom:12px;color:#fde68a">
-      您的视频文件 <code style="background:#000;padding:2px 6px;border-radius:4px;color:#fbbf24;font-size:13px">${escapeHtml(fileName)}</code>
-      可能采用了 <strong>HEVC / H.265 编码</strong>。<br>
-      浏览器（Chrome/Edge/Firefox）只原生支持 <strong>H.264 (avc1)</strong>，HEVC 视频虽能读取时长但画面全黑。
+      ${t('您的视频文件 {name} 可能采用了 <strong>HEVC / H.265 编码</strong>。<br>浏览器（Chrome/Edge/Firefox）只原生支持 <strong>H.264 (avc1)</strong>，HEVC 视频虽能读取时长但画面全黑。',{name:'<code style="background:#000;padding:2px 6px;border-radius:4px;color:#fbbf24;font-size:13px">'+escapeHtml(fileName)+'</code>'})}
     </div>
-    <div style="font-size:13px;color:#fcd34d;margin-bottom:8px">📌 <strong>3 种转码方法（任选其一）：</strong></div>
+    <div style="font-size:13px;color:#fcd34d;margin-bottom:8px">${t('📌 <strong>3 种转码方法（任选其一）：</strong>')}</div>
     <div style="margin-left:8px;color:#fef3c7">
       <div style="margin-bottom:8px"><strong style="color:#fbbf24">① 免费最强 · HandBrake</strong>（Windows/Mac）<br>
         <a href="https://handbrake.fr/downloads.php" target="_blank" style="color:#93c5fd;text-decoration:underline">下载 →</a>
-        打开视频 → 格式选 <strong>MP4</strong> → 视频编码 <strong>H.264 (x264)</strong> → <strong>Start</strong>
+        ${t('打开视频 → 格式选 <strong>MP4</strong> → 视频编码 <strong>H.264 (x264)</strong> → <strong>Start</strong>')}
       </div>
       <div style="margin-bottom:8px"><strong style="color:#fbbf24">② 免费轻量 · VLC</strong><br>
-        媒体 → 转换/保存 → 配置文件选 <strong>Video - H.264 + MP3 (MP4)</strong> → 开始
+        ${t('媒体 → 转换/保存 → 配置文件选 <strong>Video - H.264 + MP3 (MP4)</strong> → 开始')}
       </div>
       <div style="margin-bottom:8px"><strong style="color:#fbbf24">③ 在线转码</strong>（文件 &lt; 100MB 时可用）<br>
         <a href="https://cloudconvert.com/mp4-converter" target="_blank" style="color:#93c5fd;text-decoration:underline">cloudconvert.com →</a>
       </div>
     </div>
     <div style="margin-top:12px;padding:10px 12px;background:rgba(0,0,0,0.3);border-radius:8px;font-size:12.5px;color:#fde68a">
-      📱 <strong>iPhone 用户注意</strong>：设置 → 相机 → 格式 → <strong>兼容性最强 (H.264)</strong><br>
-      🤖 <strong>Android 用户注意</strong>：相机设置里切换到 <strong>高效 → H.264 优先</strong>
+      ${t('📱 iPhone 用户注意：设置 → 相机 → 格式 → <strong>兼容性最强 (H.264)</strong>')}<br>
+      ${t('🤖 Android 用户注意：相机设置里切换到 <strong>高效 → H.264 优先</strong>')}
     </div>
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
-      <button id="hevcRetryBtn" style="padding:10px 18px;background:#10b981;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">📤 我已转码，重新上传</button>
-      <button id="hevcIgnoreBtn" style="padding:10px 18px;background:transparent;color:#fde68a;border:1px solid rgba(253,230,138,0.3);border-radius:8px;cursor:pointer;font-size:13px">忽略，继续尝试处理</button>
+      <button id="hevcRetryBtn" style="padding:10px 18px;background:#10b981;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">${t('📤 我已转码，重新上传')}</button>
+      <button id="hevcIgnoreBtn" style="padding:10px 18px;background:transparent;color:#fde68a;border:1px solid rgba(253,230,138,0.3);border-radius:8px;cursor:pointer;font-size:13px">${t('忽略，继续尝试处理')}</button>
     </div>
   `;
   // 插入到 videoPreview 上方
@@ -725,7 +919,7 @@ videoProgress.onclick=e=>{video.currentTime=((e.clientX-videoProgress.getBoundin
 
 // ============ 帧提取（两种模式共用）============
 extractBtn.onclick=async()=>{
-    if(!selectedFile||!videoLoaded){showError('请先上传视频');return}
+    if(!selectedFile||!videoLoaded){showError(t('请先上传视频'));return}
     extractBtn.disabled=true;progressBar.style.display='block';$('extractProgressFill').style.width='0%';$('progressText').textContent='提取帧中...';hideError();
     try{
         const frameCount=parseInt($('frameCount').value)||8,dur=endTime-startTime;
@@ -739,7 +933,7 @@ extractBtn.onclick=async()=>{
             // 等间隔采样：N 帧 = N-1 个间隔
             // 第0帧=startTime，第N-1帧=endTime
             const time = frameCount <= 1 ? (startTime + endTime) / 2 : startTime + (dur * i) / (frameCount - 1);
-            $('progressText').textContent='提取帧 '+(i+1)+'/'+frameCount+' ('+time.toFixed(2)+'s)';
+            $('progressText').textContent=t('提取帧 {i}/{n} ({t}s)',{i:i+1,n:frameCount,t:time.toFixed(2)});
             $('extractProgressFill').style.width=((i+1)/frameCount*100)+'%';
             await new Promise(res=>{
                 const to=setTimeout(()=>{console.warn('帧'+(i+1)+'超时');res()},3000);
@@ -767,7 +961,7 @@ extractBtn.onclick=async()=>{
         }
 
         if(extractedAutoFrames.length===0)throw new Error('没有成功提取任何帧');
-        $('progressText').textContent='✅ 提取完成！共'+extractedAutoFrames.length+'帧';
+        $('progressText').textContent=t('✅ 提取完成！共{n}帧',{n:extractedAutoFrames.length});
 
         // 提取完成后显示模式选择
         $('modeSelector').style.display='block';
@@ -779,7 +973,7 @@ extractBtn.onclick=async()=>{
         // 默认进入自动模式
         switchMode('auto');
 
-    }catch(err){showError('提取失败:'+err.message);console.error(err)}
+    }catch(err){showError(t('提取失败:{msg}',{msg:err.message}));console.error(err)}
     finally{extractBtn.disabled=false;setTimeout(()=>{progressBar.style.display='none'},2000)}
 };
 
@@ -795,7 +989,7 @@ function switchMode(mode){
         $('thresholdControlAuto').style.display='flex';
     }else{
         if(!extractedBrushFrames||extractedBrushFrames.length===0){
-            alert('❌ 未提取任何帧\n\n请先提取帧后再切换到涂抹模式');
+            alert(t('❌ 未提取任何帧\n\n请先提取帧后再切换到涂抹模式'));
             // 回到自动模式
             currentMode='auto';
             $('modeAuto').classList.add('active');
@@ -821,7 +1015,7 @@ function renderAutoFrames(){
     framesGrid.innerHTML='';
     // 更新背景帧下拉框
     const sel=$('autoBgFrameSelect');
-    sel.innerHTML='<option value="-1">中间帧（默认）</option>';
+    sel.innerHTML='<option value="-1">'+t('中间帧（默认）')+'</option>';
     extractedAutoFrames.forEach((f,i)=>{
         const opt=document.createElement('option');
         opt.value=i;
@@ -838,7 +1032,7 @@ function renderAutoFrames(){
         item.innerHTML=`
             <input type="checkbox" ${f.selected?'checked':''}>
             <img src="${f._thumb||''}">
-            <div class="frame-label">帧${i+1} | ${(f.time||0).toFixed(2)}s</div>
+            <div class="frame-label">${t('帧{n} | {t}s',{n:i+1,t:((f.time||0).toFixed(2))})}</div>
             ${isBg?'<div class="bg-badge">🌲 背景</div>':''}
             ${isBg?'':'<button class="set-bg-btn" data-action="setbg">设背景</button>'}
         `;
@@ -870,26 +1064,26 @@ function setAutoBgFrame(idx){
     autoBgFrameIndex=idx;
     $('autoBgFrameSelect').value=idx;
     renderAutoFrames();
-    status.textContent='✅ 背景帧已设为帧'+(idx+1);
+    status.textContent=t('✅ 背景帧已设为帧{n}',{n:idx+1});
 }
 
 function updateAutoBgHint(){
     if(extractedAutoFrames.length===0)return;
     const hint=$('autoBgHint');
     if(autoBgFrameIndex>=0){
-        hint.innerHTML='🌲 背景帧：<strong style="color:#fcd34d;">帧'+(autoBgFrameIndex+1)+'</strong>（未变化的像素以此帧为底色）';
+        hint.innerHTML=t('🌲 背景帧：{n}（未变化的像素以此帧为底色）',{n:autoBgFrameIndex+1});
     }else{
-        hint.innerHTML='点击帧缩略图上的「设背景」按钮选择背景帧（未变化像素将以中间帧为底色）';
+        hint.innerHTML=t('点击帧缩略图上的「设背景」按钮选择背景帧（未变化像素将以中间帧为底色）');
     }
 }
 
 function updateAutoSelectedCount(){
-    $('selectedCount').textContent='已选 '+extractedAutoFrames.filter(f=>f.selected).length+' 帧';
+    $('selectedCount').textContent=t('已选 {n} 帧',{n:extractedAutoFrames.filter(f=>f.selected).length});
 }
 
 $('selectAllBtn').onclick=()=>{extractedAutoFrames.forEach((f,i)=>{f.selected=true;const c=framesGrid.children[i];if(c){c.classList.add('selected');c.querySelector('input').checked=true}});updateAutoSelectedCount()};
 $('selectNoneBtn').onclick=()=>{extractedAutoFrames.forEach((f,i)=>{f.selected=false;const c=framesGrid.children[i];if(c){c.classList.remove('selected');c.querySelector('input').checked=false}});updateAutoSelectedCount()};
-$('autoBgFrameSelect').onchange=e=>{const v=parseInt(e.target.value);if(v>=0)setAutoBgFrame(v);else{autoBgFrameIndex=-1;$('autoBgFrameSelect').value=-1;renderAutoFrames();status.textContent='背景帧重置为默认（中间帧）'}};
+$('autoBgFrameSelect').onchange=e=>{const v=parseInt(e.target.value);if(v>=0)setAutoBgFrame(v);else{autoBgFrameIndex=-1;$('autoBgFrameSelect').value=-1;renderAutoFrames();status.textContent=t('背景帧重置为默认（中间帧）')}};
 
 // ============ 自动模式：合成核心 ============
 // 计算自动背景：逐像素取所有帧 R/G/B 的中值（temporal median）作为静止场景背景。
@@ -955,13 +1149,13 @@ function composeAuto(frames,th){
 
 $('composeAutoBtn').onclick=async()=>{
     const sel=extractedAutoFrames.filter(f=>f.selected);
-    if(sel.length<2){showError('请至少选2帧');return}
+    if(sel.length<2){showError(t('请至少选2帧'));return}
     const th=parseInt($('thresholdAuto').value)||20;
     selectedBrushFrames=sel;
     const btn=$('composeAutoBtn');
     const origText=btn.textContent;
-    btn.disabled=true;btn.textContent='⏳ 合成中...';
-    status.textContent='⏳ 正在计算，请稍候（帧数越多越慢）...';
+    btn.disabled=true;btn.textContent=t('⏳ 合成中...');
+    status.textContent=t('⏳ 正在计算，请稍候（帧数越多越慢）...');
     await new Promise(r=>setTimeout(r,50));
     try{
         autoBgData=computeAutoBackground(sel.map(f=>f.data));
@@ -973,8 +1167,8 @@ $('composeAutoBtn').onclick=async()=>{
         if(!appState.isPro) drawWatermark(pctx,pc.width,pc.height);
         initAutoPreview(sel.length,th);
         showResult();
-        status.textContent='✅ 合成完成！';
-    }catch(err){showError('合成失败:'+err.message);status.textContent=''}
+        status.textContent=t('✅ 合成完成！');
+    }catch(err){showError(t('合成失败:{msg}',{msg:err.message}));status.textContent=''}
     finally{btn.disabled=false;btn.textContent=origText}
 };
 
@@ -983,7 +1177,7 @@ function initAutoPreview(total,th){
     const slider=$('frameSlider');slider.min=0;slider.max=total;slider.value=total;
     $('previewThreshold').value=th;$('thresholdValue').textContent=th;
     $('frameSliderProgress').style.width='100%';
-    $('previewCount').textContent='显示 '+total+' / '+total+' 帧';
+    $('previewCount').textContent=t('显示 {a} / {b} 帧',{a:total,b:total});
     $('frameIndicator').innerHTML='';
     for(let i=0;i<total;i++){const d=document.createElement('div');d.className='frame-dot active';d.textContent=i+1;d.dataset.idx=i;$('frameIndicator').appendChild(d)}
     $('thresholdControlAuto').style.display='flex';
@@ -995,7 +1189,7 @@ function createBrushTabs(){
     extractedBrushFrames.forEach((frame,i)=>{
         const tab=document.createElement('div');
         tab.className='frame-tab'+(i===0?' active':'')+(i===bgFrameIndex?' bg-tab':'');
-        tab.textContent='帧'+(i+1);
+        tab.textContent=t('帧{n}',{n:i+1});
         tab.dataset.index=i;
         tab.onclick=()=>{
             document.querySelectorAll('.frame-tab').forEach(t=>t.classList.remove('active'));
@@ -1024,7 +1218,7 @@ function updateBrushTabStyles(){
 }
 
 function updateBrushStatus(){
-    $('bgFrameDisplay').textContent='帧'+(bgFrameIndex+1);
+    $('bgFrameDisplay').textContent=t('帧{n}',{n:bgFrameIndex+1});
     let m=0;
     for(let i=0;i<extractedBrushFrames.length;i++){
         if(i!==bgFrameIndex && extractedBrushFrames[i].hasMask) m++;
@@ -1204,13 +1398,13 @@ $('composeBrushBtn').onclick=async()=>{
     console.log('[DEBUG] composeBrushBtn clicked, bgFrameIndex=',bgFrameIndex,'extractedBrushFrames.length=',extractedBrushFrames.length);
     const btn=$('composeBrushBtn');
     const origText=btn.textContent;
-    btn.disabled=true;btn.textContent='⏳ 合成中...';
+    btn.disabled=true;btn.textContent=t('⏳ 合成中...');
     await new Promise(r=>setTimeout(r,50));
     try{
         const bgFrame=extractedBrushFrames[bgFrameIndex];
         if(!bgFrame){
-            alert('❌ 未找到背景帧\n\nbgFrameIndex='+bgFrameIndex+'\n请检查提取帧是否成功');
-            showError('❌ 未找到背景帧（bgFrameIndex='+bgFrameIndex+'）');
+            alert(t('❌ 未找到背景帧\n\nbgFrameIndex={i}\n请检查提取帧是否成功',{i:bgFrameIndex}));
+            showError(t('❌ 未找到背景帧（bgFrameIndex={i}）',{i:bgFrameIndex}));
             return;
         }
 
@@ -1223,10 +1417,10 @@ $('composeBrushBtn').onclick=async()=>{
         if(otherMaskedFrames.length===0){
             const anyMasked=extractedBrushFrames.some((f,i)=>i!==bgFrameIndex&&f.mask.some(v=>v>0));
             if(!anyMasked){
-                alert('❌ 请先在非背景帧上涂抹选择运动区域\n\n提示：\n1）点击非背景帧的标签\n2）按住鼠标左键涂抹绿色区域');
-                showError('❌ 请先在非背景帧上涂抹选择运动区域。<br>提示：1）切换到非背景帧 2）按住鼠标左键涂抹绿色区域');
+                alert(t('❌ 请先在非背景帧上涂抹选择运动区域\n\n提示：\n1）点击非背景帧的标签\n2）按住鼠标左键涂抹绿色区域'));
+                showError(t('❌ 请先在非背景帧上涂抹选择运动区域。<br>提示：1）切换到非背景帧 2）按住鼠标左键涂抹绿色区域'));
             }else{
-                showError('❌ 收集涂抹帧失败');
+                showError(t('❌ 收集涂抹帧失败'));
             }
             return;
         }
@@ -1237,7 +1431,7 @@ $('composeBrushBtn').onclick=async()=>{
         pc.width=bgFrame.width;pc.height=bgFrame.height;pc.style.display='block';
         const slider=$('frameSlider');slider.min=0;slider.max=maskedFramesOrdered.length;slider.value=maskedFramesOrdered.length;
         $('frameSliderProgress').style.width='100%';
-        $('previewCount').textContent='显示 '+maskedFramesOrdered.length+' / '+maskedFramesOrdered.length+' 帧';
+        $('previewCount').textContent=t('显示 {a} / {b} 帧',{a:maskedFramesOrdered.length,b:maskedFramesOrdered.length});
         $('thresholdControlAuto').style.display='none';
         initBrushIndicator();
         updateBrushPreview(maskedFramesOrdered.length);
@@ -1255,13 +1449,13 @@ function initBrushIndicator(){
     const ind=$('frameIndicator');
     ind.innerHTML='';
     // 背景帧标签
-    const bg=document.createElement('div');bg.className='frame-dot bg';bg.textContent='背';bg.title='背景帧 (帧'+(bgFrameIndex+1)+')';ind.appendChild(bg);
+    const bg=document.createElement('div');bg.className='frame-dot bg';bg.textContent=t('背');bg.title=t('背景帧 (帧{n})',{n:bgFrameIndex+1});ind.appendChild(bg);
     // 非背景帧的涂抹帧
     maskedFramesOrdered.forEach((item,idx)=>{
         const d=document.createElement('div');
         d.className='frame-dot active';
         d.textContent=idx+1;
-        d.title='帧'+(item.index+1)+' 的涂抹区域';
+        d.title=t('帧{n} 的涂抹区域',{n:item.index+1});
         d.dataset.idx=idx;
         ind.appendChild(d);
     });
@@ -1285,7 +1479,7 @@ function updateBrushPreview(frameCount){
     if(!appState.isPro) drawWatermark(previewCanvas.getContext('2d'),result.width,result.height);
     const pct=(count/maskedFramesOrdered.length*100);
     $('frameSliderProgress').style.width=pct+'%';
-    $('previewCount').textContent='显示 '+count+' / '+maskedFramesOrdered.length+' 帧';
+    $('previewCount').textContent=t('显示 {a} / {b} 帧',{a:count,b:maskedFramesOrdered.length});
     document.querySelectorAll('.frame-dot[data-idx]').forEach((d,idx)=>{
         d.classList.toggle('active',idx<count);
         d.classList.toggle('no-mask',idx>=count);
@@ -1307,7 +1501,7 @@ function updatePreview(){
         if(!appState.isPro) drawWatermark(previewCanvas.getContext('2d'),result.width,result.height);
         const pct=(count/selectedBrushFrames.length*100);
             $('frameSliderProgress').style.width=pct+'%';
-            $('previewCount').textContent='显示 '+count+' / '+selectedBrushFrames.length+' 帧';
+            $('previewCount').textContent=t('显示 {a} / {b} 帧',{a:count,b:selectedBrushFrames.length});
         }catch(e){console.error('预览更新失败',e)}
     }else{
         updateBrushPreview(parseInt($('frameSlider').value));
@@ -1397,12 +1591,12 @@ function saveProject(filename){
     a.download=filename||'strobe_project_'+Date.now()+'.strobeproj';
     a.href=URL.createObjectURL(blob);a.click();URL.revokeObjectURL(a.href);
     projectLoaded=true;currentProjectName=filename||'strobe_project_'+Date.now()+'.strobeproj';
-    updateProjectInfo();status.textContent='✅ 项目已保存';
+    updateProjectInfo();status.textContent=t('✅ 项目已保存');
 }
 
 function updateProjectInfo(){
     if(projectLoaded&&extractedAutoFrames.length>0){
-        $('projectLoadedInfo').textContent='📦 已加载 · '+extractedAutoFrames.length+'帧 · '+new Date().toLocaleDateString('zh-CN');
+        $('projectLoadedInfo').textContent=t('📦 已加载 · {n}帧 · {date}',{n:extractedAutoFrames.length,date:new Date().toLocaleDateString(getToolLocale()==='en'?'en-US':'zh-CN')});
     }else{$('projectLoadedInfo').textContent=''}
 }
 
@@ -1417,7 +1611,7 @@ $('importProjectBtn').onclick=()=>$('importProjectInput').click();
 
 async function loadProjectFile(file){
     try{
-        status.textContent='加载项目中...';hideError();
+        status.textContent=t('加载项目中...');hideError();
         const text=await file.text();
         const data=JSON.parse(text);
         if(!data.frames||!Array.isArray(data.frames)||data.frames.length===0){showError('无效的项目文件');return}
@@ -1462,9 +1656,9 @@ async function loadProjectFile(file){
         $('saveProjectBtn').style.display='inline-flex';
 
         switchMode(currentMode);
-        status.textContent='✅ 项目已加载：'+extractedAutoFrames.length+'帧（'+currentMode+')';
+        status.textContent=t('✅ 项目已加载：{n}帧（{mode}）',{n:extractedAutoFrames.length,mode:currentMode});
         console.log('[DEBUG] 项目加载完成，mode:',currentMode);
-    }catch(err){console.error('[DEBUG] 加载失败',err);showError('加载项目失败: '+err.message);status.textContent=''}
+    }catch(err){console.error('[DEBUG] 加载失败',err);showError(t('加载项目失败: {msg}',{msg:err.message}));status.textContent=''}
 }
 
 $('saveProjectBtn').onclick=()=>saveProject('strobe_project_'+Date.now()+'.strobeproj');
@@ -1562,17 +1756,17 @@ $('shareToGalleryBtn').onclick=async()=>{
       mode: currentMode,
     }, '*');
     // 显示等待提示
-    status.textContent='⏳ 正在打开分享对话框...';
+    status.textContent=t('⏳ 正在打开分享对话框...');
 };
 
 // 监听父窗口的回复
 window.addEventListener('message',(e)=>{
     if(e.data&&e.data.type==='strobe-share-success'){
         status.textContent='✅ '+e.data.message;
-        alert('🎉 分享成功！\n\n'+e.data.message);
+        alert(t('🎉 分享成功！\n\n{message}',{message:e.data.message}));
     }else if(e.data&&e.data.type==='strobe-share-error'){
         status.textContent='❌ '+e.data.message;
-        alert('❌ 分享失败：\n\n'+e.data.message);
+        alert(t('❌ 分享失败：\n\n{message}',{message:e.data.message}));
     }
 });
 });
@@ -1580,17 +1774,17 @@ window.addEventListener('message',(e)=>{
 <div class="wm-overlay" id="wmOverlay">
   <div class="wm-modal">
     <button class="wm-close" title="关闭">&times;</button>
-    <h3>免费版导出提示</h3>
-    <p class="wm-sub">免费版导出的图片将带有 <strong>StrobeArt</strong> 水印（右下角）。选择下方任一方式去除水印后，即可下载干净原图：</p>
+    <h3 data-i18n="免费版导出提示">免费版导出提示</h3>
+    <p class="wm-sub" data-i18n="免费版导出的图片将带有 StrobeArt 水印（右下角）。选择下方任一方式去除水印后，即可下载干净原图：">免费版导出的图片将带有 StrobeArt 水印（右下角）。选择下方任一方式去除水印后，即可下载干净原图：</p>
     <div class="wm-opt wm-opt-upgrade">
-      <div class="wm-opt-title">① 升级会员（去 /pricing）</div>
-      <div class="wm-opt-desc">单次 ¥9.9 / 月卡 ¥29 / 年卡 ¥128 —— 无水印 + 不限视频时长</div>
+      <div class="wm-opt-title" data-i18n="① 升级会员（去 /pricing）">① 升级会员（去 /pricing）</div>
+      <div class="wm-opt-desc" data-i18n="单次 ¥9.9 / 月卡 ¥29 / 年卡 ¥128 —— 无水印 + 不限视频时长">单次 ¥9.9 / 月卡 ¥29 / 年卡 ¥128 —— 无水印 + 不限视频时长</div>
     </div>
     <div class="wm-opt wm-purple wm-opt-redeem">
-      <div class="wm-opt-title">② 用 30 积分兑换「去水印」额度（去 /profile）</div>
-      <div class="wm-opt-desc">消耗 30 积分，本次导出即获无水印原图（额度用完需再次兑换）</div>
+      <div class="wm-opt-title" data-i18n="② 用 30 积分兑换「去水印」额度（去 /profile）">② 用 30 积分兑换「去水印」额度（去 /profile）</div>
+      <div class="wm-opt-desc" data-i18n="消耗 30 积分，本次导出即获无水印原图（额度用完需再次兑换）">消耗 30 积分，本次导出即获无水印原图（额度用完需再次兑换）</div>
     </div>
-    <button class="wm-still">仍下载带水印的图片</button>
+    <button class="wm-still" data-i18n="仍下载带水印的图片">仍下载带水印的图片</button>
   </div>
 </div>
 </body>
