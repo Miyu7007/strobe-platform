@@ -1698,8 +1698,8 @@ async function loadProjectFile(file){
         // 损坏预检：所有帧都缺 imageBase64 → 明确告知用户，不再静默失败
         const validCount=data.frames.filter(f=>f&&typeof f.imageBase64==='string'&&f.imageBase64.length>100).length;
         if(validCount===0){
-            showError('项目文件已损坏：所有 '+data.frames.length+
-                ' 帧都缺失图片数据（imageBase64 为空）。<br><br>⚠️ 这通常是旧版本工具在保存时遇到 4K 帧超过浏览器 canvas 限额（约 32MB）所致。<br>✅ 请用最新版工具重新制作后保存即可正常下载导入。');
+            showError('项目文件无法导入：所有 '+data.frames.length+
+                ' 帧都缺少图片数据（imageBase64 为空）。<br><br>⚠️ 这通常是因为该作品是在「修复版」之前分享的——旧版分享只保存了帧的元数据而非真实图片。<br>✅ 解决办法：请用电脑打开该作品，点击「💾 保存项目」导出完整文件，或直接用新版工具重新制作并重新分享。');
             status.textContent=t('❌ 加载失败');
             return;
         }
@@ -1855,25 +1855,42 @@ $('shareToGalleryBtn').onclick=async()=>{
     rawCanvas.getContext('2d').drawImage(srcCanvas, 0, 0, rawCanvas.width, rawCanvas.height);
     const imageDataUrl = rawCanvas.toDataURL('image/jpeg', 0.85);
 
-    // 项目数据：仅保留轻量元数据（帧时间/选中/尺寸），不再内嵌每帧 base64 原图与 brush mask
-    // —— 这是此前体积从 KB 暴涨到 MB 的根因。付费「无水印下载」依赖分享上传的合成图文件(image_path)，不依赖此处帧数据
-    const framesMeta = extractedAutoFrames.map((f) => ({
-      time: f.time,
-      selected: f.selected,
-      width: f.data.width,
-      height: f.data.height,
-    }));
+    // 项目数据：内嵌每帧图片（最长边 ≤1920，复用 encodeFrame），保证「下载项目文件」后导入可继续编辑。
+    // 此前只存元数据（仅 time/selected/width/height）导致下载的项目文件缺少 imageBase64，导入必然失败。
+    const framesData = [];
+    let encodedOk = 0, encodedFail = 0;
+    for (let i = 0; i < extractedAutoFrames.length; i++) {
+      const f = extractedAutoFrames[i];
+      let imageBase64 = null;
+      try {
+        imageBase64 = await encodeFrame(f.data);
+        if (imageBase64) encodedOk++; else encodedFail++;
+      } catch (e) {
+        console.error('[share] frame #' + i + ' 编码失败:', e);
+        encodedFail++;
+      }
+      framesData.push({
+        imageBase64,
+        time: f.time,
+        selected: f.selected,
+        width: f.data.width,
+        height: f.data.height,
+        mask: currentMode === 'brush' && extractedBrushFrames[i] ? Array.from(extractedBrushFrames[i].mask) : null,
+        isBg: currentMode === 'brush' && extractedBrushFrames[i] ? extractedBrushFrames[i].isBg : false,
+      });
+    }
     const projectData = {
-      version: '2.1',
+      version: '2.2',
       createdAt: new Date().toISOString(),
       mode: currentMode,
       frameCount: extractedAutoFrames.length,
-      frames: framesMeta,
+      frames: framesData,
       bgFrameIndex: bgFrameIndex,
       autoBgFrameIndex: currentMode === 'auto' ? autoBgFrameIndex : null,
       settings: { frameCount: parseInt($('frameCount').value) || 8, threshold: parseInt($('thresholdAuto').value) || 20 },
       startTime,
       endTime,
+      _saveStats: { encoded: encodedOk, failed: encodedFail },
     };
     // 通过 postMessage 发送给父窗口
     window.parent.postMessage({
