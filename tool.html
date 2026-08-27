@@ -115,6 +115,9 @@
     '🎉 分享成功！\n\n{message}': '🎉 Share successful!\n\n{message}',
     '❌ 分享失败：\n\n{message}': '❌ Share failed:\n\n{message}',
     '✅ 项目已保存': '✅ Project saved',
+    '⚠️ 项目已保存（{ok}/{total} 帧，{fail} 帧失败）': '⚠️ Project saved ({ok}/{total} frames, {fail} failed)',
+    '❌ 保存失败：{msg}': '❌ Save failed: {msg}',
+    '正在编码帧 {i}/{total}...': 'Encoding frame {i}/{total}...',
     '📦 已加载 · {n}帧 · {date}': '📦 Loaded · {n} frames · {date}',
     '加载项目中...': 'Loading project...',
     '无效的项目文件': 'Invalid project file',
@@ -1572,34 +1575,100 @@ $('downloadBtn').onclick=async()=>{
 };
 
 // ============ 项目保存 ============
-function saveProject(filename){
-    const framesData=extractedAutoFrames.map((f,i)=>{
-        const tc=document.createElement('canvas');
-        tc.width=f.data.width;tc.height=f.data.height;
-        tc.getContext('2d').putImageData(f.data,0,0);
-        return{
-            imageBase64:tc.toDataURL('image/jpeg',0.85),
-            time:f.time,selected:f.selected,
-            width:f.data.width,height:f.data.height,
-            mask:currentMode==='brush'&&extractedBrushFrames[i]?Array.from(extractedBrushFrames[i].mask):null,
-            isBg:currentMode==='brush'&&extractedBrushFrames[i]?extractedBrushFrames[i].isBg:false
+// 单帧 ImageData → JPEG base64（含 GPU 缩放兜底）。
+// 4K 帧 putImageData/toDataURL 经常触发 SecurityError，这里 try 原尺寸 → 失败时用 createImageBitmap 缩到 ≤1920px 重试。
+async function encodeFrame(data){
+    const w=data.width,h=data.height,MAX=1920;
+    // 第一次尝试：原尺寸
+    try{
+        const c=document.createElement('canvas');c.width=w;c.height=h;
+        c.getContext('2d').putImageData(data,0,0);
+        const r=c.toDataURL('image/jpeg',0.85);
+        if(r&&r.length>200&&r.startsWith('data:image/jpeg;base64,')) return r;
+    }catch(e){/*fall through*/}
+    // 第二次尝试：用 OffscreenCanvas/ImageBitmap 缩到 MAX
+    try{
+        const src=document.createElement('canvas');src.width=w;src.height=h;
+        const sctx=src.getContext('2d');
+        const tmpData=sctx.createImageData(w,h);tmpData.data.set(data.data);
+        sctx.putImageData(tmpData,0,0);
+        const scale=Math.min(1,MAX/Math.max(w,h));
+        const tw=Math.max(1,Math.round(w*scale)),th=Math.max(1,Math.round(h*scale));
+        let bmp;
+        if(typeof createImageBitmap==='function'){
+            bmp=await createImageBitmap(src,{resizeWidth:tw,resizeHeight:th,resizeQuality:'high'});
+        }
+        const dst=document.createElement('canvas');dst.width=tw;dst.height=th;
+        if(bmp){ dst.getContext('2d').drawImage(bmp,0,0); }
+        else{
+            // 老浏览器无 createImageBitmap：手工 drawImage 缩放
+            dst.getContext('2d').drawImage(src,0,0,tw,th);
+        }
+        const r=dst.toDataURL('image/jpeg',0.85);
+        if(r&&r.length>200&&r.startsWith('data:image/jpeg;base64,')) return r;
+        throw new Error('toDataURL gave empty/invalid');
+    }catch(e){ throw new Error('encode failed: '+e.message); }
+}
+
+async function saveProject(filename){
+    try{
+        const total=extractedAutoFrames.length;
+        const framesData=[];
+        let okCount=0,failCount=0;
+        for(let i=0;i<total;i++){
+            status.textContent=t('正在编码帧 {i}/{total}...',{i:i+1,total});
+            try{
+                const f=extractedAutoFrames[i];
+                const b64=await encodeFrame(f.data);
+                framesData.push({
+                    imageBase64:b64,
+                    time:f.time,
+                    selected:f.selected!==false,
+                    width:f.data.width,
+                    height:f.data.height,
+                    mask:currentMode==='brush'&&extractedBrushFrames[i]?Array.from(extractedBrushFrames[i].mask):null,
+                    isBg:currentMode==='brush'&&extractedBrushFrames[i]?extractedBrushFrames[i].isBg:false
+                });
+                okCount++;
+            }catch(e){
+                console.error('[saveProject] frame',i,'failed:',e);
+                failCount++;
+            }
+            // 让 UI 有机会更新（不阻塞长任务）
+            if(i%2===1) await new Promise(r=>setTimeout(r,0));
+        }
+        if(okCount===0){
+            showError(t('❌ 保存失败：{msg}',{msg:'所有帧编码都失败（canvas 内存/ImageData 超限）'}));
+            status.textContent='';
+            return;
+        }
+        const projectData={
+            version:'2.2',createdAt:new Date().toISOString(),
+            mode:currentMode,
+            frameCount:okCount,
+            frames:framesData,
+            bgFrameIndex:bgFrameIndex,
+            autoBgFrameIndex:currentMode==='auto'?autoBgFrameIndex:null,
+            settings:{frameCount:parseInt($('frameCount').value)||8,threshold:parseInt($('thresholdAuto').value)||20},
+            startTime,endTime,
+            _saveStats:{ok:okCount,failed:failCount}
         };
-    });
-    const projectData={
-        version:'2.1',createdAt:new Date().toISOString(),
-        mode:currentMode,
-        frames:framesData,
-        bgFrameIndex:bgFrameIndex,
-        autoBgFrameIndex:currentMode==='auto'?autoBgFrameIndex:null,
-        settings:{frameCount:parseInt($('frameCount').value)||8,threshold:parseInt($('thresholdAuto').value)||20},
-        startTime,endTime
-    };
-    const blob=new Blob([JSON.stringify(projectData)],{type:'application/json'});
-    const a=document.createElement('a');
-    a.download=filename||'strobe_project_'+Date.now()+'.strobeproj';
-    a.href=URL.createObjectURL(blob);a.click();URL.revokeObjectURL(a.href);
-    projectLoaded=true;currentProjectName=filename||'strobe_project_'+Date.now()+'.strobeproj';
-    updateProjectInfo();status.textContent=t('✅ 项目已保存');
+        const blob=new Blob([JSON.stringify(projectData)],{type:'application/json'});
+        const a=document.createElement('a');
+        a.download=filename||'strobe_project_'+Date.now()+'.strobeproj';
+        a.href=URL.createObjectURL(blob);a.click();URL.revokeObjectURL(a.href);
+        projectLoaded=true;currentProjectName=filename||'strobe_project_'+Date.now()+'.strobeproj';
+        updateProjectInfo();
+        if(failCount>0){
+            status.textContent=t('⚠️ 项目已保存（{ok}/{total} 帧，{fail} 帧失败）',{ok:okCount,total,fail:failCount});
+        }else{
+            status.textContent=t('✅ 项目已保存');
+        }
+    }catch(err){
+        console.error('[saveProject] outer:',err);
+        showError(t('❌ 保存失败：{msg}',{msg:err.message}));
+        status.textContent='';
+    }
 }
 
 function updateProjectInfo(){
@@ -1693,8 +1762,8 @@ async function loadProjectFile(file){
     }catch(err){console.error('[DEBUG] 加载失败',err);showError(t('加载项目失败: {msg}',{msg:(err&&(err.message||err.name))||'未知错误'}));status.textContent=''}
 }
 
-$('saveProjectBtn').onclick=()=>saveProject('strobe_project_'+Date.now()+'.strobeproj');
-$('saveProjectBtn2').onclick=()=>saveProject('strobe_project_'+Date.now()+'.strobeproj');
+$('saveProjectBtn').onclick=()=>{ saveProject('strobe_project_'+Date.now()+'.strobeproj').catch(()=>{}); };
+$('saveProjectBtn2').onclick=()=>{ saveProject('strobe_project_'+Date.now()+'.strobeproj').catch(()=>{}); };
 
 // ============ 重置 ============
 $('resetBtn').onclick=()=>{
