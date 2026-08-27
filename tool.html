@@ -1621,20 +1621,44 @@ async function loadProjectFile(file){
     try{
         status.textContent=t('加载项目中...');hideError();
         const text=await file.text();
-        const data=JSON.parse(text);
-        if(!data.frames||!Array.isArray(data.frames)||data.frames.length===0){showError('无效的项目文件');return}
+        let data;
+        try { data=JSON.parse(text); }
+        catch(parseErr){
+            console.error('[loadProject] JSON.parse failed; fileSize=',text.length,'name=',file.name,parseErr);
+            showError(t('加载项目失败: {msg}',{msg:'JSON 解析失败（文件可能损坏，size='+text.length+'B）'}));status.textContent='';return;
+        }
+        if(!data.frames||!Array.isArray(data.frames)||data.frames.length===0){showError(t('加载项目失败: {msg}',{msg:'无效的项目文件（frames 字段缺失或为空）'}));status.textContent='';return}
 
         const tc=document.createElement('canvas'),tctx=tc.getContext('2d');
-        extractedAutoFrames=await Promise.all(data.frames.map(async(fd)=>{
+        // 单帧 imageBase64 解码失败时跳过该帧而非阻断整体
+        const decodeResults=await Promise.all(data.frames.map((fd,idx)=>new Promise((resolve)=>{
+            if(!fd||!fd.imageBase64){ resolve({ok:false,idx,reason:'missing imageBase64'}); return; }
             const img=new Image();
-            await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=fd.imageBase64});
-            tc.width=fd.width;tc.height=fd.height;tctx.drawImage(img,0,0);
-            return{data:tctx.getImageData(0,0,fd.width,fd.height),time:fd.time,selected:fd.selected,_thumb:fd.imageBase64};
-        }));
+            img.onload=()=>{
+                try{
+                    tc.width=fd.width||img.width; tc.height=fd.height||img.height;
+                    tctx.drawImage(img,0,0);
+                    resolve({ok:true,idx,imageData:tctx.getImageData(0,0,tc.width,tc.height),fd});
+                }catch(e){ resolve({ok:false,idx,reason:'canvas:'+e.message}); }
+            };
+            img.onerror=()=> resolve({ok:false,idx,reason:'image onerror（imageBase64 损坏或格式异常）'});
+            img.src=fd.imageBase64;
+        })));
+        const okFrames=decodeResults.filter(r=>r.ok);
+        if(okFrames.length===0){
+            console.error('[loadProject] all frames decode failed',decodeResults);
+            showError(t('加载项目失败: {msg}',{msg:'所有帧解码失败（imageBase64 数据损坏）'}));status.textContent='';return;
+        }
+        if(okFrames.length<decodeResults.length) console.warn('[loadProject] skipped',decodeResults.length-okFrames.length,'of',decodeResults.length,'frames');
+        const sortedOk=okFrames.slice().sort((a,b)=>a.idx-b.idx);
+        extractedAutoFrames=sortedOk.map((r)=>{
+            const fd=r.fd;
+            return{data:r.imageData,time:fd.time,selected:fd.selected!==false,_thumb:fd.imageBase64};
+        });
 
         if(data.mode==='brush'&&data.frames[0].mask){
             extractedBrushFrames=extractedAutoFrames.map((f,i)=>{
-                const fd=data.frames[i];
+                const fd=sortedOk[i].fd;
                 return{imageData:f.data,data:f.data,mask:new Uint8Array(fd.mask||[]),isBg:fd.isBg||false,width:f.data.width,height:f.data.height};
             });
             bgFrameIndex=data.bgFrameIndex||0;
@@ -1664,9 +1688,9 @@ async function loadProjectFile(file){
         $('saveProjectBtn').style.display='inline-flex';
 
         switchMode(currentMode);
-        status.textContent=t('✅ 项目已加载：{n}帧（{mode}）',{n:extractedAutoFrames.length,mode:currentMode});
-        console.log('[DEBUG] 项目加载完成，mode:',currentMode);
-    }catch(err){console.error('[DEBUG] 加载失败',err);showError(t('加载项目失败: {msg}',{msg:err.message}));status.textContent=''}
+        status.textContent=t('✅ 项目已加载：{n}帧（{mode}）',{n:extractedAutoFrames.length,mode:currentMode})+((decodeResults.length-okFrames.length)>0?`（已跳过 ${decodeResults.length-okFrames.length} 损坏帧）`:'');
+        console.log('[DEBUG] 项目加载完成，mode:',currentMode,'frames:',extractedAutoFrames.length);
+    }catch(err){console.error('[DEBUG] 加载失败',err);showError(t('加载项目失败: {msg}',{msg:(err&&(err.message||err.name))||'未知错误'}));status.textContent=''}
 }
 
 $('saveProjectBtn').onclick=()=>saveProject('strobe_project_'+Date.now()+'.strobeproj');
