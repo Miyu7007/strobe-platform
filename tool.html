@@ -115,11 +115,15 @@
     '🎉 分享成功！\n\n{message}': '🎉 Share successful!\n\n{message}',
     '❌ 分享失败：\n\n{message}': '❌ Share failed:\n\n{message}',
     '✅ 项目已保存': '✅ Project saved',
+    '✅ 项目已保存（{n} 帧）': '✅ Project saved ({n} frames)',
+    '💾 正在保存帧 {i}/{n}...': '💾 Saving frame {i}/{n}...',
+    '⚠️ 项目已保存：成功 {ok}/{total} 帧，{fail} 帧保存失败': '⚠️ Project saved: {ok}/{total} frames OK, {fail} failed',
     '📦 已加载 · {n}帧 · {date}': '📦 Loaded · {n} frames · {date}',
     '加载项目中...': 'Loading project...',
     '无效的项目文件': 'Invalid project file',
     '加载项目失败: {msg}': 'Failed to load project: {msg}',
     '✅ 项目已加载：{n}帧（{mode}）': '✅ Project loaded: {n} frames ({mode})',
+    '⚠️ 项目已加载：{n}帧（{mode}，跳过 {m} 损坏帧）': '⚠️ Project loaded: {n} frames ({mode}, skipped {m} corrupted)',
     '视频时长 {dur}，超过免费版 15 秒限制': 'Video duration {dur} exceeds the free 15s limit',
     '本视频无法在免费版下处理。请选择以下方式之一解锁：': 'This video cannot be processed on the free plan. Unlock via one of the following:',
     '升级会员': 'Upgrade Membership',
@@ -1563,35 +1567,99 @@ $('downloadBtn').onclick=async()=>{
     a.click();
 };
 
-// ============ 项目保存 ============
-function saveProject(filename){
-    const framesData=extractedAutoFrames.map((f,i)=>{
+// ============ 项目保存 v2.2：4K canvas 限额兜底 ============
+// 4K ImageData(3840×2160×4≈33MB) 超 Chromium canvas ~32MB 限额时，
+// putImageData/toDataURL 静默失败，导致项目文件约 800 字节空壳、imageBase64 全空。
+// 修复：单帧先按原尺寸编码；触发限额失败时降级用 createImageBitmap 缩放到
+// 最长边 ≤1920 后再编码；仍失败则标记 _corrupt:true 占位，导入时跳过。
+const MAX_FRAME_DIM = 1920;
+
+async function encodeFrame(data){
+    // 1) 尝试原尺寸
+    try{
         const tc=document.createElement('canvas');
-        tc.width=f.data.width;tc.height=f.data.height;
-        tc.getContext('2d').putImageData(f.data,0,0);
-        return{
-            imageBase64:tc.toDataURL('image/jpeg',0.85),
-            time:f.time,selected:f.selected,
-            width:f.data.width,height:f.data.height,
-            mask:currentMode==='brush'&&extractedBrushFrames[i]?Array.from(extractedBrushFrames[i].mask):null,
-            isBg:currentMode==='brush'&&extractedBrushFrames[i]?extractedBrushFrames[i].isBg:false
+        tc.width=data.width;tc.height=data.height;
+        tc.getContext('2d').putImageData(data,0,0);
+        const out=tc.toDataURL('image/jpeg',0.85);
+        if(out&&out.length>200)return out;
+    }catch(e1){
+        console.warn('[encodeFrame] 原尺寸编码失败，将降级缩放:',e1&&e1.message||e1);
+    }
+    // 2) 降级：createImageBitmap 缩放至最长边 ≤1920
+    const longest=Math.max(data.width,data.height);
+    const scale=Math.min(1,MAX_FRAME_DIM/longest);
+    const w=Math.max(1,Math.round(data.width*scale));
+    const h=Math.max(1,Math.round(data.height*scale));
+    const bm=await createImageBitmap(data);
+    const tc2=document.createElement('canvas');
+    tc2.width=w;tc2.height=h;
+    tc2.getContext('2d').drawImage(bm,0,0,w,h);
+    if(bm.close)bm.close();
+    const out2=tc2.toDataURL('image/jpeg',0.85);
+    console.log('[encodeFrame] 降级编码',data.width+'x'+data.height,'→',w+'x'+h);
+    return out2;
+}
+
+async function saveProject(filename){
+    try{
+        const total=extractedAutoFrames.length;
+        const framesData=[];
+        let ok=0,failed=0;
+        const failedIdx=[];
+        for(let i=0;i<total;i++){
+            const f=extractedAutoFrames[i];
+            status.textContent=t('💾 正在保存帧 {i}/{n}...',{i:i+1,n:total});
+            try{
+                const imageBase64=await encodeFrame(f.data);
+                framesData.push({
+                    imageBase64,
+                    time:f.time,selected:f.selected,
+                    width:f.data.width,height:f.data.height,
+                    mask:currentMode==='brush'&&extractedBrushFrames[i]?Array.from(extractedBrushFrames[i].mask):null,
+                    isBg:currentMode==='brush'&&extractedBrushFrames[i]?extractedBrushFrames[i].isBg:false
+                });
+                ok++;
+            }catch(e){
+                console.error('[saveProject] frame #'+i+' 编码失败:',e);
+                failed++;
+                failedIdx.push(i);
+                // 用空帧占位（导入时跳过 _corrupt 帧）
+                framesData.push({
+                    imageBase64:null,
+                    time:f.time,selected:f.selected,
+                    width:f.data.width,height:f.data.height,
+                    mask:null,isBg:false,
+                    _corrupt:true
+                });
+            }
+        }
+        const projectData={
+            version:'2.2',
+            createdAt:new Date().toISOString(),
+            mode:currentMode,
+            frames:framesData,
+            bgFrameIndex:bgFrameIndex,
+            autoBgFrameIndex:currentMode==='auto'?autoBgFrameIndex:null,
+            settings:{frameCount:parseInt($('frameCount').value)||8,threshold:parseInt($('thresholdAuto').value)||20},
+            startTime,endTime,
+            _saveStats:{total,encoded:ok,failed,failedIndices:failedIdx,maxDim:MAX_FRAME_DIM}
         };
-    });
-    const projectData={
-        version:'2.1',createdAt:new Date().toISOString(),
-        mode:currentMode,
-        frames:framesData,
-        bgFrameIndex:bgFrameIndex,
-        autoBgFrameIndex:currentMode==='auto'?autoBgFrameIndex:null,
-        settings:{frameCount:parseInt($('frameCount').value)||8,threshold:parseInt($('thresholdAuto').value)||20},
-        startTime,endTime
-    };
-    const blob=new Blob([JSON.stringify(projectData)],{type:'application/json'});
-    const a=document.createElement('a');
-    a.download=filename||'strobe_project_'+Date.now()+'.strobeproj';
-    a.href=URL.createObjectURL(blob);a.click();URL.revokeObjectURL(a.href);
-    projectLoaded=true;currentProjectName=filename||'strobe_project_'+Date.now()+'.strobeproj';
-    updateProjectInfo();status.textContent=t('✅ 项目已保存');
+        const blob=new Blob([JSON.stringify(projectData)],{type:'application/json'});
+        const a=document.createElement('a');
+        a.download=filename||'strobe_project_'+Date.now()+'.strobeproj';
+        a.href=URL.createObjectURL(blob);a.click();URL.revokeObjectURL(a.href);
+        projectLoaded=true;currentProjectName=filename||'strobe_project_'+Date.now()+'.strobeproj';
+        updateProjectInfo();
+        if(failed===0){
+            status.textContent=t('✅ 项目已保存（{n} 帧）',{n:total});
+        }else{
+            status.textContent=t('⚠️ 项目已保存：成功 {ok}/{total} 帧，{fail} 帧保存失败',{ok,total,fail:failed});
+        }
+    }catch(e){
+        console.error('[saveProject] 整体失败:',e);
+        showError('保存失败：'+(e&&e.message||String(e)));
+        status.textContent=t('❌ 加载失败');
+    }
 }
 
 function updateProjectInfo(){
@@ -1613,23 +1681,74 @@ async function loadProjectFile(file){
     try{
         status.textContent=t('加载项目中...');hideError();
         const text=await file.text();
-        const data=JSON.parse(text);
-        if(!data.frames||!Array.isArray(data.frames)||data.frames.length===0){showError('无效的项目文件');return}
+
+        let data;
+        try{
+            data=JSON.parse(text);
+        }catch(je){
+            showError('项目文件不是有效的 JSON（文件可能已损坏）');
+            status.textContent=t('❌ 加载失败');
+            return;
+        }
+        if(!data.frames||!Array.isArray(data.frames)||data.frames.length===0){
+            showError('无效的项目文件：缺少 frames 数组');
+            return;
+        }
+
+        // 损坏预检：所有帧都缺 imageBase64 → 明确告知用户，不再静默失败
+        const validCount=data.frames.filter(f=>f&&typeof f.imageBase64==='string'&&f.imageBase64.length>100).length;
+        if(validCount===0){
+            showError('项目文件已损坏：所有 '+data.frames.length+
+                ' 帧都缺失图片数据（imageBase64 为空）。<br><br>⚠️ 这通常是旧版本工具在保存时遇到 4K 帧超过浏览器 canvas 限额（约 32MB）所致。<br>✅ 请用最新版工具重新制作后保存即可正常下载导入。');
+            status.textContent=t('❌ 加载失败');
+            return;
+        }
+        if(validCount<data.frames.length){
+            console.warn('[loadProjectFile] 部分帧缺失 imageBase64:',data.frames.length-validCount,'/',data.frames.length);
+        }
 
         const tc=document.createElement('canvas'),tctx=tc.getContext('2d');
-        extractedAutoFrames=await Promise.all(data.frames.map(async(fd)=>{
-            const img=new Image();
-            await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=fd.imageBase64});
-            tc.width=fd.width;tc.height=fd.height;tctx.drawImage(img,0,0);
-            return{data:tctx.getImageData(0,0,fd.width,fd.height),time:fd.time,selected:fd.selected,_thumb:fd.imageBase64};
+        // 单帧容错：每个帧用 try/catch 跳过坏帧
+        const loadResults=await Promise.all(data.frames.map(async(fd,idx)=>{
+            if(!fd||!fd.imageBase64)return null;
+            try{
+                const img=new Image();
+                await new Promise((res,rej)=>{
+                    img.onload=res;
+                    img.onerror=()=>rej(new Error('Frame #'+idx+' imageBase64 解码失败'));
+                    img.src=fd.imageBase64;
+                });
+                tc.width=fd.width;tc.height=fd.height;
+                tctx.drawImage(img,0,0);
+                return{data:tctx.getImageData(0,0,fd.width,fd.height),time:fd.time,selected:fd.selected,_thumb:fd.imageBase64};
+            }catch(e){
+                console.warn('[loadProjectFile] frame #'+idx+' 跳过:',e&&e.message||e);
+                return null;
+            }
         }));
 
-        if(data.mode==='brush'&&data.frames[0].mask){
-            extractedBrushFrames=extractedAutoFrames.map((f,i)=>{
-                const fd=data.frames[i];
+        const validResults=loadResults.filter(r=>r!==null);
+        if(validResults.length===0){
+            showError('项目文件中 '+data.frames.length+' 帧全部解码失败');
+            status.textContent=t('❌ 加载失败');
+            return;
+        }
+        extractedAutoFrames=validResults;
+
+        // brush 模式：按 time+width+height 匹配原 data.frames 中的 mask 与 isBg，bgFrameIndex 也对应重映射
+        if(data.mode==='brush'&&data.frames[0]&&data.frames[0].mask){
+            extractedBrushFrames=extractedAutoFrames.map((f)=>{
+                const fd=data.frames.find(x=>x&&x.time===f.time&&x.width===f.width&&x.height===f.height)||{};
                 return{imageData:f.data,data:f.data,mask:new Uint8Array(fd.mask||[]),isBg:fd.isBg||false,width:f.data.width,height:f.data.height};
             });
-            bgFrameIndex=data.bgFrameIndex||0;
+            const bgInData=data.bgFrameIndex||0;
+            const bgFd=data.frames[bgInData];
+            if(bgFd&&bgFd.time!=null){
+                const bgIdx=validResults.findIndex(r=>r.time===bgFd.time&&r.data.width===bgFd.width);
+                bgFrameIndex=bgIdx>=0?bgIdx:0;
+            }else{
+                bgFrameIndex=0;
+            }
         }
 
         currentMode=data.mode||'auto';
@@ -1656,9 +1775,18 @@ async function loadProjectFile(file){
         $('saveProjectBtn').style.display='inline-flex';
 
         switchMode(currentMode);
-        status.textContent=t('✅ 项目已加载：{n}帧（{mode}）',{n:extractedAutoFrames.length,mode:currentMode});
+        const skipped=data.frames.length-validResults.length;
+        if(skipped===0){
+            status.textContent=t('✅ 项目已加载：{n}帧（{mode}）',{n:extractedAutoFrames.length,mode:currentMode});
+        }else{
+            status.textContent=t('⚠️ 项目已加载：{n}帧（{mode}，跳过 {m} 损坏帧）',{n:extractedAutoFrames.length,mode:currentMode,m:skipped});
+        }
         console.log('[DEBUG] 项目加载完成，mode:',currentMode);
-    }catch(err){console.error('[DEBUG] 加载失败',err);showError(t('加载项目失败: {msg}',{msg:err.message}));status.textContent=''}
+    }catch(err){
+        console.error('[DEBUG] 加载失败',err);
+        showError(t('加载项目失败: {msg}',{msg:err&&err.message||String(err)}));
+        status.textContent=t('❌ 加载失败');
+    }
 }
 
 $('saveProjectBtn').onclick=()=>saveProject('strobe_project_'+Date.now()+'.strobeproj');
