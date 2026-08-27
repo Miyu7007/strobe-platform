@@ -603,6 +603,14 @@ window.addEventListener('message',(e)=>{
   const d=e.data; if(!d) return;
   if(d.type==='strobe-state'){ appState=Object.assign({},appState,d.state); updateMembershipBar(); }
   else if(d.type==='strobe-response' && d.reqId && _pending[d.reqId]){ _pending[d.reqId](d); delete _pending[d.reqId]; }
+  else if(d.type==='strobe-load-project'){
+    // 父页（作品详情）通过 sessionStorage 跳过来时塞进的项目文件
+    try{
+        const blob=new Blob([d.content],{type:'application/json'});
+        const file=new File([blob], d.filename||'project.strobeproj', {type:'application/json'});
+        loadProjectFile(file);
+      }catch(err){console.warn('[strobe] load project from parent failed:',err);}
+    }
 });
 postToParent({type:'strobe-ready'});
 
