@@ -1882,6 +1882,7 @@ function showWatermarkModal(){
 
 // ============ 分享到广场 ============
 $('shareToGalleryBtn').onclick=async()=>{
+  try {
     if(resultArea.style.display==='none'){alert('请先合成频闪照片再分享');return}
     // 确保预览是最新的
     updatePreview();
@@ -2010,6 +2011,12 @@ $('shareToGalleryBtn').onclick=async()=>{
     }, '*');
     // 显示等待提示
     status.textContent=t('⏳ 正在打开分享对话框...');
+  } catch (err) {
+    console.error('[share] 分享处理异常:', err);
+    try { showError('分享失败：' + (err && err.message ? err.message : String(err))); } catch(e){}
+    try { status.textContent = t('❌ 分享失败'); } catch(e){}
+    try { alert('分享失败：' + (err && err.message ? err.message : String(err))); } catch(e){}
+  }
 };
 
 // 监听父窗口的回复
@@ -2022,7 +2029,7 @@ window.addEventListener('message',(e)=>{
         alert(t('❌ 分享失败：\n\n{message}',{message:e.data.message}));
     }
 });
-});
+
 // 自动从 work 详情页加载项目（sessionStorage 暂存的 .strobeproj 文本）
 // 触发条件：URL 带 ?autoload=1（来自 work 页「🚀 打开项目文件」按钮跳转）
 // 行为：取 sessionStorage 内文本 → 构造 File → 调 loadProjectFile 加载到画布
