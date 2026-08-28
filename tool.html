@@ -1929,6 +1929,48 @@ window.addEventListener('message',(e)=>{
     }
 });
 });
+// 自动从 work 详情页加载项目（sessionStorage 暂存的 .strobeproj 文本）
+// 触发条件：URL 带 ?autoload=1（来自 work 页「🚀 打开项目文件」按钮跳转）
+// 行为：取 sessionStorage 内文本 → 构造 File → 调 loadProjectFile 加载到画布
+;(function autoLoadProjectFromWork(){
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('autoload') !== '1') return;
+        const text = sessionStorage.getItem('strobePendingProjectText');
+        const name = sessionStorage.getItem('strobePendingProjectName') || 'project.strobeproj';
+        const workTitle = sessionStorage.getItem('strobePendingProjectWorkTitle') || '';
+        sessionStorage.removeItem('strobePendingProjectText');
+        sessionStorage.removeItem('strobePendingProjectName');
+        sessionStorage.removeItem('strobePendingProjectWorkTitle');
+        if (!text || text.length < 50) {
+            console.warn('[autoload] sessionStorage 未找到项目数据（可能跨 tab 跳转未共享）');
+            showError(t('自动加载失败：未找到项目数据。请回到作品详情页，用「下载项目文件」后手动导入。'));
+            return;
+        }
+        // 250ms 等待 status/DOM 等初始化完成
+        setTimeout(() => {
+            try {
+                const blob = new Blob([text], { type: 'application/octet-stream' });
+                const file = new File([blob], name, { type: 'application/octet-stream' });
+                loadProjectFile(file).then(() => {
+                    try {
+                        const u = new URL(window.location.href);
+                        u.searchParams.delete('autoload');
+                        window.history.replaceState({}, '', u.toString());
+                    } catch (e) {}
+                    if (workTitle) status.textContent = t('✅ 已自动加载「{title}」', { title: workTitle });
+                }).catch((err) => {
+                    console.warn('[autoload] loadProjectFile 失败:', err);
+                });
+            } catch (e) {
+                console.warn('[autoload] 构造 File 失败:', e);
+                showError(t('自动加载失败: ') + (e.message || String(e)));
+            }
+        }, 250);
+    } catch (e) {
+        console.warn('[autoload] IIFE 失败:', e);
+    }
+})();
 </script>
 <div class="wm-overlay" id="wmOverlay">
   <div class="wm-modal">
