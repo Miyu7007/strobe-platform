@@ -408,7 +408,7 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
 <div style="font-size:12px;color:#888;margin-top:4px" data-i18n="支持 MP4、WebM、MOV · 推荐 MP4">支持 MP4、WebM、MOV · 推荐 MP4</div>
 <div class="format-warning" style="margin-top:10px" data-i18n="⚠️ AVI/MKV 不支持，请转 MP4">⚠️ AVI/MKV 不支持，请转 MP4</div>
 </div>
-<input type="file" id="fileInput" accept=".mp4,.mov,.webm,.mkv,.avi,.flv,.wmv,.m4v,.3gp,.rmvb">
+<input type="file" id="fileInput">
 <div class="status" id="status"></div>
 
 <div class="video-preview" id="videoPreview">
@@ -675,11 +675,26 @@ const editCanvas=$('editCanvas'),editCtx=editCanvas.getContext('2d');
 const resultArea=$('resultArea'),previewCanvas=$('previewCanvas');
 
 // ============ 视频上传 ============
+// 动态创建 input，避免复用同一元素导致 Windows 文件框第二次卡死（Shell 扩展进程残留）
+function openFileDialog(){
+  const inp=document.createElement('input');
+  inp.type='file';
+  inp.style.display='none';
+  inp.onchange=e=>{ if(e.target.files&&e.target.files[0]) handleFile(e.target.files[0]); inp.remove(); };
+  document.body.appendChild(inp);
+  inp.click();
+}
 console.log('[Init] 视频上传模块初始化');
-uploadArea.onclick=()=>{console.log('[Click] uploadArea clicked, opening file dialog');fileInput.click()};
+console.log('[Init] 视频上传模块初始化');
+uploadArea.onclick=()=>{console.log('[Click] uploadArea clicked, opening file dialog');openFileDialog()};
 uploadArea.ondragover=e=>e.preventDefault();
 uploadArea.ondrop=e=>{e.preventDefault();if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])};
 fileInput.onchange=e=>{console.log('[FileInput] onchange fired, files:',e.target.files.length);if(e.target.files[0])handleFile(e.target.files[0])};
+// Ctrl+V 粘贴文件支持（绕过系统文件框，零卡死）
+document.addEventListener('paste',e=>{
+  const files=e.clipboardData&&e.clipboardData.files;
+  if(files&&files[0]){console.log('[Paste] file pasted:',files[0].name);handleFile(files[0]);}
+});
 
 function handleFile(file){
     selectedFile=file;videoLoaded=false;hideError();
@@ -882,7 +897,7 @@ function showHevcHelpPanel(fileName){
 
   document.getElementById('hevcRetryBtn').onclick=()=>{
     card.style.display='none';
-    fileInput.value=''; fileInput.click();
+    openFileDialog();
   };
   document.getElementById('hevcIgnoreBtn').onclick=()=>{card.style.display='none'};
 }
