@@ -1752,7 +1752,11 @@ async function loadProjectFile(file){
         // brush 模式：按 time+width+height 匹配原 data.frames 中的 mask 与 isBg，bgFrameIndex 也对应重映射
         if(data.mode==='brush'&&data.frames[0]&&data.frames[0].mask){
             extractedBrushFrames=extractedAutoFrames.map((f)=>{
-                const fd=data.frames.find(x=>x&&x.time===f.time&&x.width===f.width&&x.height===f.height)||{};
+                // ⚠️ validResults 不带顶层 width/height（只有 data/time/selected/_thumb），
+                // 必须用 f.data.width/height 匹配，否则 find 永远返回 undefined → fd.mask 为空 →
+                // new Uint8Array([]) 长度 0 → paintBrushDot 越界写入静默失败 → 切帧后笔刷全丢。
+                // （注意同一函数内 bgFrameIndex 恢复用的是 r.data.width，唯独这里写错了。）
+                const fd=data.frames.find(x=>x&&x.time===f.time&&x.width===f.data.width&&x.height===f.data.height)||{};
                 return{imageData:f.data,data:f.data,mask:new Uint8Array(fd.mask||[]),isBg:fd.isBg||false,width:f.data.width,height:f.data.height};
             });
             const bgInData=data.bgFrameIndex||0;
