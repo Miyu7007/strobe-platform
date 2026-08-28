@@ -1939,34 +1939,58 @@ window.addEventListener('message',(e)=>{
         const text = sessionStorage.getItem('strobePendingProjectText');
         const name = sessionStorage.getItem('strobePendingProjectName') || 'project.strobeproj';
         const workTitle = sessionStorage.getItem('strobePendingProjectWorkTitle') || '';
+        // 取完立即清理 sessionStorage——避免 F5 后还残留
         sessionStorage.removeItem('strobePendingProjectText');
         sessionStorage.removeItem('strobePendingProjectName');
         sessionStorage.removeItem('strobePendingProjectWorkTitle');
         if (!text || text.length < 50) {
             console.warn('[autoload] sessionStorage 未找到项目数据（可能跨 tab 跳转未共享）');
-            showError(t('自动加载失败：未找到项目数据。请回到作品详情页，用「下载项目文件」后手动导入。'));
+            if (typeof showError === 'function') {
+                showError('自动加载失败：未找到项目数据。请回到作品详情页，用「下载项目文件」后手动导入。');
+            }
             return;
         }
-        // 250ms 等待 status/DOM 等初始化完成
-        setTimeout(() => {
+        // IIFE 在第二个 <script> 末尾同步执行，但 $('importProjectInput').onchange=handleProjectFileSelect
+        // 是在 document.addEventListener('DOMContentLoaded', ()=>{...}) 内部，需 DOM ready 后才会绑定。
+        // 等浏览器 fire DOMContentLoaded + listener 执行完再触发 change 事件。
+        const tryInject = () => {
             try {
-                const blob = new Blob([text], { type: 'application/octet-stream' });
-                const file = new File([blob], name, { type: 'application/octet-stream' });
-                loadProjectFile(file).then(() => {
+                const file = new File([text], name, { type: 'application/octet-stream' });
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                const input = document.getElementById('importProjectInput');
+                if (!input) {
+                    console.warn('[autoload] importProjectInput 元素未就绪，重试...');
+                    setTimeout(tryInject, 100);
+                    return;
+                }
+                input.files = dt.files;
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+                // 清理 URL（与成功/失败无关）
+                requestAnimationFrame(() => {
                     try {
                         const u = new URL(window.location.href);
                         u.searchParams.delete('autoload');
                         window.history.replaceState({}, '', u.toString());
                     } catch (e) {}
-                    if (workTitle) status.textContent = t('✅ 已自动加载「{title}」', { title: workTitle });
-                }).catch((err) => {
-                    console.warn('[autoload] loadProjectFile 失败:', err);
                 });
+                if (workTitle) {
+                    const s = document.getElementById('status');
+                    if (s) s.textContent = '✅ 已自动加载「' + workTitle + '」';
+                }
+                console.log('[autoload] 已通过 importProjectInput.change 触发加载：' + name);
             } catch (e) {
-                console.warn('[autoload] 构造 File 失败:', e);
-                showError(t('自动加载失败: ') + (e.message || String(e)));
+                console.warn('[autoload] 注入文件失败:', e);
+                if (typeof showError === 'function') {
+                    showError('自动加载失败: ' + (e.message || String(e)));
+                }
             }
-        }, 250);
+        };
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => setTimeout(tryInject, 50));
+        } else {
+            setTimeout(tryInject, 50);
+        }
     } catch (e) {
         console.warn('[autoload] IIFE 失败:', e);
     }
