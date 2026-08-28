@@ -751,6 +751,7 @@ function handleFile(file){
         showError(t('⚠️ 视频解码失败。文件后缀是 .{ext}，但内部编码（可能是 HEVC/H.265、MPEG-4 Part2 等）不被浏览器支持。<br><br><strong>解决方法：</strong>用格式工厂或 HandBrake 重新转码为 <strong>H.264 + AAC</strong> 的 MP4。<br><br>💡 <strong>快速检测方法：</strong>用 Windows Media Player 或 VLC 能否打开？如果 VLC 能打开但浏览器不行，几乎确定是编码问题。',{ext:ext}));
         status.textContent=t('❌ 加载失败');
     };
+}
 
 // ============= 视频编码兼容检测 =============
 // 1) MP4 codec sniff：手写最小 MP4 box 解析器，扫 moov→trak→mdia→minf→stbl→stsd→首条 sample_description.fourcc
@@ -904,6 +905,7 @@ function showHevcHelpPanel(fileName){
 }
 
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function showError(msg){
     resultArea.style.display='none';framesSelectArea.style.display='none';framesEditArea.style.display='none';
     $('modeSelector').style.display='none';$('projectBanner').style.display='none';
 }
@@ -2111,6 +2113,7 @@ window.addEventListener('message',(e)=>{
         console.warn('[autoload] IIFE 失败:', e);
     }
 })();
+});
 </script>
 <div class="wm-overlay" id="wmOverlay">
   <div class="wm-modal">
