@@ -1935,7 +1935,13 @@ window.addEventListener('message',(e)=>{
 ;(function autoLoadProjectFromWork(){
     try {
         const params = new URLSearchParams(window.location.search);
-        if (params.get('autoload') !== '1') return;
+        // 参数可能在父页 URL 上：work 详情页 router.push('/tool?autoload=1') 跳到 React 壳页，
+        // 壳页用 iframe 嵌入 tool.html，此时 autoload=1 在父页而非 iframe 自身 URL。
+        let parentHasAutoload = false;
+        try {
+          parentHasAutoload = new URLSearchParams(window.parent.location.search).get('autoload') === '1';
+        } catch (e) {}
+        if (params.get('autoload') !== '1' && !parentHasAutoload) return;
         const text = sessionStorage.getItem('strobePendingProjectText');
         const name = sessionStorage.getItem('strobePendingProjectName') || 'project.strobeproj';
         const workTitle = sessionStorage.getItem('strobePendingProjectWorkTitle') || '';
@@ -1966,12 +1972,19 @@ window.addEventListener('message',(e)=>{
                 }
                 input.files = dt.files;
                 input.dispatchEvent(new Event('change', { bubbles: true }));
-                // 清理 URL（与成功/失败无关）
+                // 清理 URL（与成功/失败无关）：自己的 + 父页的，避免 F5 刷新后重触发并报错
                 requestAnimationFrame(() => {
                     try {
                         const u = new URL(window.location.href);
                         u.searchParams.delete('autoload');
                         window.history.replaceState({}, '', u.toString());
+                    } catch (e) {}
+                    try {
+                        const pu = new URL(window.parent.location.href);
+                        if (pu.searchParams.get('autoload') === '1') {
+                            pu.searchParams.delete('autoload');
+                            window.parent.history.replaceState({}, '', pu.toString());
+                        }
                     } catch (e) {}
                 });
                 if (workTitle) {
