@@ -215,7 +215,9 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
 .upload-area:hover{border-color:#667eea;background:rgba(102,126,234,0.1)}
 .upload-area.dragover{border-color:#667eea;background:rgba(102,126,234,0.15)}
 .upload-icon{font-size:48px;margin-bottom:16px}
-.hidden-file-input{display:none}
+/* 关键：input[type=file] 若用 display:none，浏览器会把 .click() 静默拒掉（不弹文件选择框也不报错）。
+   所以不能 display:none，改用视觉不可见但仍可点击的方式隐藏（位置 + 尺寸 + 透明）。 */
+.hidden-file-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:-9999px;margin:0;padding:0;border:0}
 .video-preview{display:none;margin-top:20px}
 .video-container{background:#000;border-radius:12px;overflow:hidden}
 .video-container video{width:100%;max-height:300px;display:block}
