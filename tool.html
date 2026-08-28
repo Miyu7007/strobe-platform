@@ -1585,23 +1585,23 @@ $('downloadBtn').onclick=async()=>{
 // 4K ImageData(3840×2160×4≈33MB) 超 Chromium canvas ~32MB 限额时，
 // putImageData/toDataURL 静默失败，导致项目文件约 800 字节空壳、imageBase64 全空。
 // 修复：单帧先按原尺寸编码；触发限额失败时降级用 createImageBitmap 缩放到
-// 最长边 ≤1920 后再编码；仍失败则标记 _corrupt:true 占位，导入时跳过。
+// 最长边 ≤ maxDim 后再编码；仍失败则标记 _corrupt:true 占位，导入时跳过。
+// 默认 1920（saveProject 保持本地图质）；分享到广场传 1280 + 0.75 让项目文件 <50MB 上传。
 const MAX_FRAME_DIM = 1920;
-
-async function encodeFrame(data){
+async function encodeFrame(data, maxDim = 1920, quality = 0.85){
     // 1) 尝试原尺寸
     try{
         const tc=document.createElement('canvas');
         tc.width=data.width;tc.height=data.height;
         tc.getContext('2d').putImageData(data,0,0);
-        const out=tc.toDataURL('image/jpeg',0.85);
+        const out=tc.toDataURL('image/jpeg',quality);
         if(out&&out.length>200)return out;
     }catch(e1){
         console.warn('[encodeFrame] 原尺寸编码失败，将降级缩放:',e1&&e1.message||e1);
     }
-    // 2) 降级：createImageBitmap 缩放至最长边 ≤1920
+    // 2) 降级：createImageBitmap 缩放至最长边 ≤ maxDim
     const longest=Math.max(data.width,data.height);
-    const scale=Math.min(1,MAX_FRAME_DIM/longest);
+    const scale=Math.min(1,maxDim/longest);
     const w=Math.max(1,Math.round(data.width*scale));
     const h=Math.max(1,Math.round(data.height*scale));
     const bm=await createImageBitmap(data);
@@ -1609,9 +1609,31 @@ async function encodeFrame(data){
     tc2.width=w;tc2.height=h;
     tc2.getContext('2d').drawImage(bm,0,0,w,h);
     if(bm.close)bm.close();
-    const out2=tc2.toDataURL('image/jpeg',0.85);
+    const out2=tc2.toDataURL('image/jpeg',quality);
     console.log('[encodeFrame] 降级编码',data.width+'x'+data.height,'→',w+'x'+h);
     return out2;
+}
+
+// ===== 涂抹 mask 编解码（base64 字符串版）=====
+// v2.2 老格式：mask 存 JSON Array `Array.from(uint8array)`，每像素 ~2-4 字节 JSON，
+//              1920×1080 mask ≈ 4-8MB / 帧，涂抹模式项目文件轻松超 50MB 上传失败。
+// v2.3 新格式：mask 存 base64 字符串，1 字节/像素 → base64 编码后 ~1.33 字节/像素，
+//              同样尺寸 mask ≈ 2.8MB / 帧 + 帧图压缩 ≈ 50-60% 文件大小压缩。
+// 读取兼容：loadProjectFile 同时接 string（v2.3）和 Array（v2.2）。
+function uint8ToBase64(u8){
+    let bin='';
+    // 分块避免大字符串拼接问题；100KB 一块稳一些
+    const CHUNK=0x8000;
+    for(let i=0;i<u8.length;i+=CHUNK){
+        bin+=String.fromCharCode.apply(null,u8.subarray(i,i+CHUNK));
+    }
+    return btoa(bin);
+}
+function base64ToUint8(b64){
+    const bin=atob(b64);
+    const out=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);
+    return out;
 }
 
 async function saveProject(filename){
@@ -1757,7 +1779,14 @@ async function loadProjectFile(file){
                 // new Uint8Array([]) 长度 0 → paintBrushDot 越界写入静默失败 → 切帧后笔刷全丢。
                 // （注意同一函数内 bgFrameIndex 恢复用的是 r.data.width，唯独这里写错了。）
                 const fd=data.frames.find(x=>x&&x.time===f.time&&x.width===f.data.width&&x.height===f.data.height)||{};
-                return{imageData:f.data,data:f.data,mask:new Uint8Array(fd.mask||[]),isBg:fd.isBg||false,width:f.data.width,height:f.data.height};
+                // mask 兼容：v2.3 存 base64 字符串（紧凑），v2.2 存 JSON Array（`Array.from(uint8)`），
+                // null/缺失 → 空 Uint8Array。任意一项类型不对都 fallback 到空数组不崩。
+                let mask;
+                if(!fd.mask){mask=new Uint8Array(0);}
+                else if(typeof fd.mask==='string'){try{mask=base64ToUint8(fd.mask);}catch(e){console.warn('[loadProjectFile] mask base64 解码失败:',e);mask=new Uint8Array(0);}}
+                else if(Array.isArray(fd.mask)||fd.mask instanceof Uint8Array){mask=new Uint8Array(fd.mask);}
+                else{mask=new Uint8Array(0);}
+                return{imageData:f.data,data:f.data,mask,isBg:fd.isBg||false,width:f.data.width,height:f.data.height};
             });
             const bgInData=data.bgFrameIndex||0;
             const bgFd=data.frames[bgInData];
@@ -1873,19 +1902,64 @@ $('shareToGalleryBtn').onclick=async()=>{
     rawCanvas.getContext('2d').drawImage(srcCanvas, 0, 0, rawCanvas.width, rawCanvas.height);
     const imageDataUrl = rawCanvas.toDataURL('image/jpeg', 0.85);
 
-    // 项目数据：内嵌每帧图片（最长边 ≤1920，复用 encodeFrame），保证「下载项目文件」后导入可继续编辑。
-    // 此前只存元数据（仅 time/selected/width/height）导致下载的项目文件缺少 imageBase64，导入必然失败。
+    // 项目数据：分享时帧图长边 1280（vs saveProject 默认 1920）+ mask 用 base64 字符串压缩，
+    // 让涂抹模式项目文件也能 <50MB 上传。读取兼容老 v2.2 array 格式（loadProjectFile 兼容）。
+    // 体积预算：Supabase Storage 免费档单文件上限 50MB，超出会报「The object exceeded the maximum allowed size」。
+    // 若初版估算仍超，自动二次降级到 1024 + 0.7；还超则直接拦下给提示。
+    const SHARE_FRAME_DIM = 1280;
+    const SHARE_QUALITY = 0.75;
+    const HARD_LIMIT_BYTES = 49 * 1024 * 1024; // 留 1MB 余地
+    const SOFT_LIMIT_BYTES = 35 * 1024 * 1024; // 超过则降级
+
+    // 第一遍：估算（用 0 字节占位快速算 mask 体积）
+    let estBytes = 0;
+    const maskEstList = [];
+    for (let i = 0; i < extractedAutoFrames.length; i++) {
+      const f = extractedAutoFrames[i];
+      const mask = currentMode === 'brush' && extractedBrushFrames[i] ? extractedBrushFrames[i].mask : null;
+      const maskBytes = mask ? mask.length : 0;
+      maskEstList.push(maskBytes);
+      // 估算：mask base64 1.33 字节/像素 + 帧图 JPEG 估算 ≈ 100KB (1280 长边)
+      estBytes += (maskBytes * 1.34) + 100 * 1024;
+    }
+    let useDim = SHARE_FRAME_DIM;
+    let useQuality = SHARE_QUALITY;
+    if (estBytes > HARD_LIMIT_BYTES) {
+      // 即使用最低质量+最低分辨率也超 → 拦下
+      showError('项目文件过大（预估 ' + (estBytes / 1024 / 1024).toFixed(1) + ' MB），请减少帧数或改用「💾 保存项目」到本地后再处理');
+      status.textContent = t('❌ 项目文件过大，无法分享');
+      return;
+    } else if (estBytes > SOFT_LIMIT_BYTES) {
+      // 软上限：降级到 1024 + 0.7
+      useDim = 1024;
+      useQuality = 0.7;
+      console.log('[share] 项目文件估算 ' + (estBytes / 1024 / 1024).toFixed(1) + ' MB，启动降级压缩 (1024/0.7)');
+    } else {
+      console.log('[share] 项目文件估算 ' + (estBytes / 1024 / 1024).toFixed(1) + ' MB，正常压缩 (' + useDim + '/' + useQuality + ')');
+    }
+
+    // 第二遍：实际编码
     const framesData = [];
     let encodedOk = 0, encodedFail = 0;
     for (let i = 0; i < extractedAutoFrames.length; i++) {
       const f = extractedAutoFrames[i];
+      status.textContent = t('⏳ 正在压缩帧 {i}/{n}...', { i: i + 1, n: extractedAutoFrames.length });
       let imageBase64 = null;
       try {
-        imageBase64 = await encodeFrame(f.data);
+        imageBase64 = await encodeFrame(f.data, useDim, useQuality);
         if (imageBase64) encodedOk++; else encodedFail++;
       } catch (e) {
         console.error('[share] frame #' + i + ' 编码失败:', e);
         encodedFail++;
+      }
+      // mask 改 base64 字符串（v2.3 格式）；null 时不写字段保持精简
+      let maskStr = null;
+      if (currentMode === 'brush' && extractedBrushFrames[i] && extractedBrushFrames[i].mask) {
+        try {
+          maskStr = uint8ToBase64(extractedBrushFrames[i].mask);
+        } catch (e) {
+          console.warn('[share] frame #' + i + ' mask base64 编码失败，跳过该 mask:', e);
+        }
       }
       framesData.push({
         imageBase64,
@@ -1893,12 +1967,12 @@ $('shareToGalleryBtn').onclick=async()=>{
         selected: f.selected,
         width: f.data.width,
         height: f.data.height,
-        mask: currentMode === 'brush' && extractedBrushFrames[i] ? Array.from(extractedBrushFrames[i].mask) : null,
+        mask: maskStr,
         isBg: currentMode === 'brush' && extractedBrushFrames[i] ? extractedBrushFrames[i].isBg : false,
       });
     }
     const projectData = {
-      version: '2.2',
+      version: '2.3',
       createdAt: new Date().toISOString(),
       mode: currentMode,
       frameCount: extractedAutoFrames.length,
@@ -1908,8 +1982,24 @@ $('shareToGalleryBtn').onclick=async()=>{
       settings: { frameCount: parseInt($('frameCount').value) || 8, threshold: parseInt($('thresholdAuto').value) || 20 },
       startTime,
       endTime,
-      _saveStats: { encoded: encodedOk, failed: encodedFail },
+      _shareStats: {
+        encoded: encodedOk,
+        failed: encodedFail,
+        maxDim: useDim,
+        quality: useQuality,
+        maskFormat: 'base64',
+      },
     };
+    // 上传前最后一道体积检查（实际 JSON.stringify 后字节数）
+    const projJson = JSON.stringify(projectData);
+    const projSize = new Blob([projJson]).size;
+    console.log('[share] 实际项目文件大小', (projSize / 1024 / 1024).toFixed(2), 'MB');
+    if (projSize > HARD_LIMIT_BYTES) {
+      showError('项目文件过大（' + (projSize / 1024 / 1024).toFixed(1) + ' MB），无法分享。请减少帧数（如 16 帧以下）或改用「💾 保存项目」到本地。');
+      status.textContent = t('❌ 项目文件过大，无法分享');
+      return;
+    }
+
     // 通过 postMessage 发送给父窗口
     window.parent.postMessage({
       type: 'strobe-share',
