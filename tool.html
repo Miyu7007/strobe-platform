@@ -685,7 +685,6 @@ function openFileDialog(){
   inp.click();
 }
 console.log('[Init] 视频上传模块初始化');
-console.log('[Init] 视频上传模块初始化');
 uploadArea.onclick=()=>{console.log('[Click] uploadArea clicked, opening file dialog');openFileDialog()};
 uploadArea.ondragover=e=>e.preventDefault();
 uploadArea.ondrop=e=>{e.preventDefault();if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])};
