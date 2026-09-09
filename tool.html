@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="zh-CN" data-page-node-id="ziTFaucsCDlDi59OBwoSF9">
+<head data-page-node-id="B70nDMIlchowqkGkOQU7z4">
+<meta charset="UTF-8" data-page-node-id="vYbAH9Ai4smyqQEXsJScRT">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="hVVbkoiObsmwIPBcZ19pIX">
 <title>频闪照片合成器</title>
 <script>
 // ====== i18n 引擎（中英双语，与父站共享 strobe-locale） ======
@@ -377,196 +377,196 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
 .wm-close:hover{color:#fff}
 </style>
 </head>
-<body>
-<div class="container">
-<h1>🎬 频闪照片合成器</h1>
-<div style="font-size:0.8rem;color:#999;text-align:center;line-height:1.6;margin-top:-10px;margin-bottom:10px;">开发者：俞俊雄<br>Email:584273654@qq.com</div>
-<p class="subtitle" data-i18n="上传视频 → 提取帧 → 自动检测或涂抹编辑 → 合成">上传视频 → 提取帧 → 自动检测或涂抹编辑 → 合成</p>
-<div id="membershipBar" style="text-align:center;font-size:13px;margin-bottom:14px;color:#a5b4fc;"></div>
+<body data-page-node-id="5xIsEkiQTBYpaETnCds7ah">
+<div class="container" data-page-node-id="0II0F1DSrmZqoNFBCh5XFe">
+<h1 data-page-node-id="G7uS0EtIix6CYNaqub2w8J">🎬 频闪照片合成器</h1>
+<div style="font-size:0.8rem;color:#999;text-align:center;line-height:1.6;margin-top:-10px;margin-bottom:10px;" data-page-node-id="E0t1efye75fLXu6Qmr6uti">开发者：俞俊雄<br data-page-node-id="qgncY2k3dyfGrcBdQneWCW">Email:584273654@qq.com</div>
+<p class="subtitle" data-i18n="上传视频 → 提取帧 → 自动检测或涂抹编辑 → 合成" data-page-node-id="RdaqocdZ6WQAAeBAwfdgoi">上传视频 → 提取帧 → 自动检测或涂抹编辑 → 合成</p>
+<div id="membershipBar" style="text-align:center;font-size:13px;margin-bottom:14px;color:#a5b4fc;" data-page-node-id="v4yz2VchBvc7BVtoVh0Zzi"></div>
 
 <!-- 项目管理 Banner -->
-<div class="project-banner" id="projectBanner">
-<button class="btn btn-purple" id="importProjectBtn" data-i18n="📂 导入已有项目">📂 导入已有项目</button>
-<input type="file" id="importProjectInput" accept=".strobeproj" class="hidden-file-input">
-<button class="btn btn-success" id="saveProjectBtn" style="display:none;" data-i18n="💾 保存项目">💾 保存项目</button>
-<span class="project-loaded-info" id="projectLoadedInfo"></span>
+<div class="project-banner" id="projectBanner" data-page-node-id="TWDGiAbKlckRzQ76whzZyp">
+<button class="btn btn-purple" id="importProjectBtn" data-i18n="📂 导入已有项目" data-page-node-id="LWfgtuXdbPwHmLpjVww1rE">📂 导入已有项目</button>
+<input type="file" id="importProjectInput" accept=".strobeproj" class="hidden-file-input" data-page-node-id="YUckrTbyBLg4QDt6GF1wov">
+<button class="btn btn-success" id="saveProjectBtn" style="display:none;" data-i18n="💾 保存项目" data-page-node-id="amfhYn9B56nDDjGYw0HgwT">💾 保存项目</button>
+<span class="project-loaded-info" id="projectLoadedInfo" data-page-node-id="6NtNmT45b3XeOC1C9Fjzpg"></span>
 </div>
 
-<div class="card">
+<div class="card" data-page-node-id="piwvvhV4ZMMUWQMirI5aWB">
 <!-- 模式说明 -->
-<div class="instruction-box" id="instructionBox">
-<h5 data-i18n="📋 使用说明">📋 使用说明</h5>
-<ol>
-<li data-i18n="上传视频，提取帧后选择编辑模式">上传视频，提取帧后选择编辑模式</li>
-<li data-i18n="自动检测模式：用复选框选择帧，系统自动检测运动物体差异；可指定背景帧（未变化的像素以此帧为底色）">自动检测模式：用复选框选择帧，系统自动检测运动物体差异；可指定背景帧（未变化的像素以此帧为底色）</li>
-<li data-i18n="涂抹编辑模式：在每帧上手动涂抹绿色区域选定运动物体，并设置背景帧">涂抹编辑模式：在每帧上手动涂抹绿色区域选定运动物体，并设置背景帧</li>
-<li data-i18n="完成后点击「合成频闪照片」预览，支持拖动滑块逐步查看">完成后点击「合成频闪照片」预览，支持拖动滑块逐步查看</li>
+<div class="instruction-box" id="instructionBox" data-page-node-id="mRC2jRxcBHZ0ahFrR4mY4p">
+<h5 data-i18n="📋 使用说明" data-page-node-id="UE7C55sWCoj1kNZaGBNf8Y">📋 使用说明</h5>
+<ol data-page-node-id="tn3oE315v9cgOmmXmWUEY1">
+<li data-i18n="上传视频，提取帧后选择编辑模式" data-page-node-id="DVEHzUAHqyFCDc2Dy8DEFt">上传视频，提取帧后选择编辑模式</li>
+<li data-i18n="自动检测模式：用复选框选择帧，系统自动检测运动物体差异；可指定背景帧（未变化的像素以此帧为底色）" data-page-node-id="bnzlNjrbJqIeN1SwlpVP2P">自动检测模式：用复选框选择帧，系统自动检测运动物体差异；可指定背景帧（未变化的像素以此帧为底色）</li>
+<li data-i18n="涂抹编辑模式：在每帧上手动涂抹绿色区域选定运动物体，并设置背景帧" data-page-node-id="fw0ADcVS0zEXulAchguOzp">涂抹编辑模式：在每帧上手动涂抹绿色区域选定运动物体，并设置背景帧</li>
+<li data-i18n="完成后点击「合成频闪照片」预览，支持拖动滑块逐步查看" data-page-node-id="RbpIvaXDJ7sFdLlqT6Pn1J">完成后点击「合成频闪照片」预览，支持拖动滑块逐步查看</li>
 </ol>
 </div>
 
-<div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-<div class="upload-icon">📁</div>
-<div data-i18n="点击或拖拽上传视频">点击或拖拽上传视频</div>
-<div style="font-size:12px;color:#888;margin-top:4px" data-i18n="支持 MP4、WebM、MOV · 推荐 MP4">支持 MP4、WebM、MOV · 推荐 MP4</div>
-<div class="format-warning" style="margin-top:10px" data-i18n="⚠️ AVI/MKV 不支持，请转 MP4">⚠️ AVI/MKV 不支持，请转 MP4</div>
+<div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()" data-page-node-id="Lcr1O4VC8NdJGP4wuRKUND">
+<div class="upload-icon" data-page-node-id="O3nFnfEjFtchncSqfyfecr">📁</div>
+<div data-i18n="点击或拖拽上传视频" data-page-node-id="5PIws7it9OTJtb1Dl4yHXq">点击或拖拽上传视频</div>
+<div style="font-size:12px;color:#888;margin-top:4px" data-i18n="支持 MP4、WebM、MOV · 推荐 MP4" data-page-node-id="FDqRixpCRkOF85dU8nVunY">支持 MP4、WebM、MOV · 推荐 MP4</div>
+<div class="format-warning" style="margin-top:10px" data-i18n="⚠️ AVI/MKV 不支持，请转 MP4" data-page-node-id="ImHjlgmwMMN3htmslvNyhH">⚠️ AVI/MKV 不支持，请转 MP4</div>
 </div>
-<input type="file" id="fileInput">
-<div class="status" id="status"></div>
+<input type="file" id="fileInput" data-page-node-id="APnZKUCDEiIXccLnujUa5m">
+<div class="status" id="status" data-page-node-id="TNE5214OGvBUHjoFzaG8vG"></div>
 
-<div class="video-preview" id="videoPreview">
-<div class="video-container">
-<video id="video"></video>
-<div class="video-controls">
-<button class="play-btn" id="playBtn">▶</button>
-<div class="video-time" id="videoTime">0:00 / 0:00</div>
-<div class="video-progress" id="videoProgress"><div class="video-progress-fill" id="progressFill"></div></div>
+<div class="video-preview" id="videoPreview" data-page-node-id="EFIfv5vPgi4kgGdW5saZvD">
+<div class="video-container" data-page-node-id="33FWNMyM8VLJiKPc2X9MkQ">
+<video id="video" data-page-node-id="GB8cCIKVdwf6Qu80uATRWA"></video>
+<div class="video-controls" data-page-node-id="LvdAbcszedTg1jVoaOs0w5">
+<button class="play-btn" id="playBtn" data-page-node-id="TAUbwf97YC4a3pihTFrqIe">▶</button>
+<div class="video-time" id="videoTime" data-page-node-id="exsdWe1HHFvFBVlInGff6n">0:00 / 0:00</div>
+<div class="video-progress" id="videoProgress" data-page-node-id="r5ZvfT0bp8wMlTyJWlHsZp"><div class="video-progress-fill" id="progressFill" data-page-node-id="xADXPE1DbNB1EaIc4Xr53q"></div></div>
 </div>
 </div>
-</div>
-
-<div class="time-selector" id="timeSelector">
-<h4 data-i18n="⏱️ 选择时间范围">⏱️ 选择时间范围</h4>
-<div class="timeline-container" id="timelineContainer">
-<div class="timeline-track"></div>
-<div class="timeline-range" id="timelineRange"></div>
-<div class="timeline-handle" id="handleStart" data-i18n="起">起</div>
-<div class="timeline-handle" id="handleEnd" data-i18n="止">止</div>
-</div>
-<div class="time-inputs">
-<div class="time-input-group"><label data-i18n="开始：">开始：</label><input type="text" id="startTimeInput" value="0.00"></div>
-<div class="time-input-group"><label data-i18n="结束：">结束：</label><input type="text" id="endTimeInput" value="0.00"></div>
-</div>
-<div class="duration-display" id="durationDisplay" data-i18n="选中时长：0.00 秒">选中时长：0.00 秒</div>
 </div>
 
-<div class="settings" id="settings">
-<div class="setting-row">
-<label data-i18n="提取帧数">提取帧数</label>
-<input type="number" id="frameCount" value="8" min="2" max="20">
+<div class="time-selector" id="timeSelector" data-page-node-id="pbYFc7EAY0akFWeasEwF5j">
+<h4 data-i18n="⏱️ 选择时间范围" data-page-node-id="qAKGIEP4dZhZu1nNi299He">⏱️ 选择时间范围</h4>
+<div class="timeline-container" id="timelineContainer" data-page-node-id="khYas3EoncN2q7vHbgtD6k">
+<div class="timeline-track" data-page-node-id="KtSby9k3cKIKtFPRc2pOWB"></div>
+<div class="timeline-range" id="timelineRange" data-page-node-id="QZCgmAgFKHZJTtE1AvC4iJ"></div>
+<div class="timeline-handle" id="handleStart" data-i18n="起" data-page-node-id="FgUf5JbDzSizJ3v6a5rUED">起</div>
+<div class="timeline-handle" id="handleEnd" data-i18n="止" data-page-node-id="KYpsX8hMnjGZNKRvmVxvqO">止</div>
 </div>
-<button class="btn btn-primary" id="extractBtn" data-i18n="🎞️ 提取帧">🎞️ 提取帧</button>
+<div class="time-inputs" data-page-node-id="9LoCVAh2FSsrtbiGy0S1Gy">
+<div class="time-input-group" data-page-node-id="0FbX8gqHzxfuRnxYsC5zUA"><label data-i18n="开始：" data-page-node-id="GybiMfMMKzJex7mrfYOtGc">开始：</label><input type="text" id="startTimeInput" value="0.00" data-page-node-id="nqhTIgLG7CWEvkKXl8ltjq"></div>
+<div class="time-input-group" data-page-node-id="vlxNjfsFUDJBQEVvof8e0F"><label data-i18n="结束：" data-page-node-id="WETjIwVCWFWWhxDUgAYPCC">结束：</label><input type="text" id="endTimeInput" value="0.00" data-page-node-id="A0kAPkmKSiehPWjnxgYhjf"></div>
+</div>
+<div class="duration-display" id="durationDisplay" data-i18n="选中时长：0.00 秒" data-page-node-id="cvd0EWTnRtzmy3DtDIFrPV">选中时长：0.00 秒</div>
 </div>
 
-<div class="progress-bar" id="progressBar">
-<div class="progress-track"><div class="progress-fill" id="extractProgressFill"></div></div>
-<div class="progress-text" id="progressText" data-i18n="准备中...">准备中...</div>
+<div class="settings" id="settings" data-page-node-id="VTLeGfaRpsKwuimQKS50dX">
+<div class="setting-row" data-page-node-id="XeTOxT6CL6TU6d1nS6NfAy">
+<label data-i18n="提取帧数" data-page-node-id="nL7cFEGZG53lhLCyxDUfWg">提取帧数</label>
+<input type="number" id="frameCount" value="8" min="2" max="20" data-page-node-id="3akGql4yu7oU636anErazk">
 </div>
-<div class="error-msg" id="errorMsg"></div>
+<button class="btn btn-primary" id="extractBtn" data-i18n="🎞️ 提取帧" data-page-node-id="BWx96ge7nQUFxDzLagDHpB">🎞️ 提取帧</button>
+</div>
+
+<div class="progress-bar" id="progressBar" data-page-node-id="9OtYUshHIGjXJVu88iIDjl">
+<div class="progress-track" data-page-node-id="flVbFlz5aAC91HSC8CEPmJ"><div class="progress-fill" id="extractProgressFill" data-page-node-id="SlRynaggYDuJBgT5wiTCJK"></div></div>
+<div class="progress-text" id="progressText" data-i18n="准备中..." data-page-node-id="Z4aDDRdFb4DpYhG3lN6UEI">准备中...</div>
+</div>
+<div class="error-msg" id="errorMsg" data-page-node-id="dDWrHniHV9NlmLSHvlgJmh"></div>
 </div>
 
 <!-- 模式切换 -->
-<div class="card mode-selector" id="modeSelector">
-<h4 data-i18n="🎯 选择编辑模式">🎯 选择编辑模式</h4>
-<div class="mode-buttons">
-<div class="mode-btn active" id="modeAuto">
-<div data-i18n="⚡ 自动检测模式">⚡ 自动检测模式</div>
-<div class="mode-desc" data-i18n="复选框选帧，系统自动检测运动差异">复选框选帧，系统自动检测运动差异</div>
+<div class="card mode-selector" id="modeSelector" data-page-node-id="1EAaQmvQPTFgmD6LcMve9m">
+<h4 data-i18n="🎯 选择编辑模式" data-page-node-id="FpxnVDKpwBXWh4qjC9titd">🎯 选择编辑模式</h4>
+<div class="mode-buttons" data-page-node-id="YG7AyTWpjE8Z9zlyUuNavb">
+<div class="mode-btn active" id="modeAuto" data-page-node-id="HrAJYSJgdxNXqhTSHs5p5C">
+<div data-i18n="⚡ 自动检测模式" data-page-node-id="AQ1j3NaBWMIIE8DXo8g74h">⚡ 自动检测模式</div>
+<div class="mode-desc" data-i18n="复选框选帧，系统自动检测运动差异" data-page-node-id="dAWk5FUEl14QCxxkAsf4Zg">复选框选帧，系统自动检测运动差异</div>
 </div>
-<div class="mode-btn" id="modeBrush">
-<div data-i18n="🖌️ 涂抹编辑模式">🖌️ 涂抹编辑模式</div>
-<div class="mode-desc" data-i18n="手动涂抹绿色区域选定运动物体">手动涂抹绿色区域选定运动物体</div>
+<div class="mode-btn" id="modeBrush" data-page-node-id="JPBqeCkCl66uwr2B1GX0QC">
+<div data-i18n="🖌️ 涂抹编辑模式" data-page-node-id="e7pk6qoZgOIfZ2nJT1vB5X">🖌️ 涂抹编辑模式</div>
+<div class="mode-desc" data-i18n="手动涂抹绿色区域选定运动物体" data-page-node-id="qDBYJiWbACxBeadig2Oe2F">手动涂抹绿色区域选定运动物体</div>
 </div>
 </div>
 </div>
 
 <!-- 自动模式：帧选择区 -->
-<div class="card frames-select-area" id="framesSelectArea">
-<div class="frames-select-header">
-<h4 data-i18n="📷 提取的帧（点击选择要合成的帧）">📷 提取的帧（点击选择要合成的帧）</h4>
-<div class="frames-select-actions">
-<button class="btn btn-secondary btn-small" id="selectAllBtn" data-i18n="全选">全选</button>
-<button class="btn btn-secondary btn-small" id="selectNoneBtn" data-i18n="取消">取消</button>
-<span class="selected-count" id="selectedCount" data-i18n="已选 0 帧">已选 0 帧</span>
+<div class="card frames-select-area" id="framesSelectArea" data-page-node-id="AX9JIIZAWqKZ8UvCKUW7YL">
+<div class="frames-select-header" data-page-node-id="NDfOUicFmzQ1Eb60SmJS5n">
+<h4 data-i18n="📷 提取的帧（点击选择要合成的帧）" data-page-node-id="tDww77DHCJHwQotDtq1XyN">📷 提取的帧（点击选择要合成的帧）</h4>
+<div class="frames-select-actions" data-page-node-id="bCdCuihnfdak3OHoeyZpuQ">
+<button class="btn btn-secondary btn-small" id="selectAllBtn" data-i18n="全选" data-page-node-id="54BGDkOhloCLWDKiAnRZUT">全选</button>
+<button class="btn btn-secondary btn-small" id="selectNoneBtn" data-i18n="取消" data-page-node-id="4cqrICbmlQBU2JNXSLR02G">取消</button>
+<span class="selected-count" id="selectedCount" data-i18n="已选 0 帧" data-page-node-id="f347uxUPLGFrBC8DIb6j9e">已选 0 帧</span>
 </div>
 </div>
-<div class="frames-grid" id="framesGrid"></div>
-<div class="setting-row" style="margin-top:16px">
-<label data-i18n="差异阈值">差异阈值</label>
-<input type="number" id="thresholdAuto" value="20" min="5" max="100" style="width:80px">
+<div class="frames-grid" id="framesGrid" data-page-node-id="ePUQSN9qWpWu1zEldnLKV3"></div>
+<div class="setting-row" style="margin-top:16px" data-page-node-id="IYBRj8QncPXlcMaN8QkHEa">
+<label data-i18n="差异阈值" data-page-node-id="F7QwpEbz3iHdhmnoP5Rzpx">差异阈值</label>
+<input type="number" id="thresholdAuto" value="20" min="5" max="100" style="width:80px" data-page-node-id="DXGEZbD60CF9uMMZt0iLg0">
 </div>
-<div class="setting-row" style="margin-top:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px 12px;">
-<label style="min-width:auto;color:#fcd34d;" data-i18n="🌲 背景帧">🌲 背景帧</label>
-<span style="font-size:11px;color:#aaa;flex:1;" id="autoBgHint" data-i18n="点击帧缩略图右上角的「设背景」按钮选择背景帧（未变化的像素以此帧为底色）">点击帧缩略图右上角的「设背景」按钮选择背景帧（未变化的像素以此帧为底色）</span>
-<select id="autoBgFrameSelect" style="padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:13px;min-width:90px;">
-<option value="-1" data-i18n="中间帧（默认）">中间帧（默认）</option>
+<div class="setting-row" style="margin-top:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px 12px;" data-page-node-id="SKCE3NDCpNB4wAFXJx0E8a">
+<label style="min-width:auto;color:#fcd34d;" data-i18n="🌲 背景帧" data-page-node-id="Oap6pYZYz4zf7KUiz1EL8N">🌲 背景帧</label>
+<span style="font-size:11px;color:#aaa;flex:1;" id="autoBgHint" data-i18n="点击帧缩略图右上角的「设背景」按钮选择背景帧（未变化的像素以此帧为底色）" data-page-node-id="LAo2aRIuIVq63XKCoOAD5b">点击帧缩略图右上角的「设背景」按钮选择背景帧（未变化的像素以此帧为底色）</span>
+<select id="autoBgFrameSelect" style="padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:13px;min-width:90px;" data-page-node-id="ulpnqWk90073YQ2dvnx0Dq">
+<option value="-1" data-i18n="中间帧（默认）" data-page-node-id="TEyLmEuelIfMdVfxs2U9vI">中间帧（默认）</option>
 </select>
-<button class="btn btn-warning btn-small" id="autoBgFrameBtn" style="display:none;" data-i18n="🌲 设为背景">🌲 设为背景</button>
+<button class="btn btn-warning btn-small" id="autoBgFrameBtn" style="display:none;" data-i18n="🌲 设为背景" data-page-node-id="w1Ao63YoQOhU3BCCAHJrY3">🌲 设为背景</button>
 </div>
-<div style="margin-top:16px;text-align:center">
-<button class="btn btn-primary" id="composeAutoBtn" data-i18n="✨ 合成频闪照片">✨ 合成频闪照片</button>
+<div style="margin-top:16px;text-align:center" data-page-node-id="YR0igSEWb3W10zhC4tACQI">
+<button class="btn btn-primary" id="composeAutoBtn" data-i18n="✨ 合成频闪照片" data-page-node-id="0Q0LGOFIAMwSnAstsk4C4c">✨ 合成频闪照片</button>
 </div>
 </div>
 
 <!-- 涂抹模式：帧编辑区 -->
-<div class="card frames-edit-area" id="framesEditArea">
-<div class="frames-edit-header">
-<h4 data-i18n="🖌️ 涂抹选择运动物体">🖌️ 涂抹选择运动物体</h4>
-<div class="brush-controls">
-<div class="brush-size-control">
-<label data-i18n="画笔大小:">画笔大小:</label>
-<input type="range" id="brushSize" min="5" max="50" value="20">
-<span id="brushSizeValue">20</span>
+<div class="card frames-edit-area" id="framesEditArea" data-page-node-id="FAdHWUp67NEbpvPO2DOwiY">
+<div class="frames-edit-header" data-page-node-id="C8jRYbHHv1BUiFuc2Gf6Ty">
+<h4 data-i18n="🖌️ 涂抹选择运动物体" data-page-node-id="msDuxIskDIBa7716AHSNrr">🖌️ 涂抹选择运动物体</h4>
+<div class="brush-controls" data-page-node-id="Dip4Ar9EzkK6Vb39TG1kGx">
+<div class="brush-size-control" data-page-node-id="Q18VCwtKN3zGD8ajl1ASj0">
+<label data-i18n="画笔大小:" data-page-node-id="DkBKXqK5KdVPqWA3B5aPvw">画笔大小:</label>
+<input type="range" id="brushSize" min="5" max="50" value="20" data-page-node-id="863LbDbAEk7FHfxVSwQF4y">
+<span id="brushSizeValue" data-page-node-id="qHR8BfrYxdPnMVefekImRk">20</span>
 </div>
 </div>
 </div>
-<div class="status-bar" id="statusBar">
-<span data-i18n="背景帧:"></span> <strong id="bgFrameDisplay">帧1</strong> |
-<span data-i18n="已涂抹帧数:"></span> <strong id="maskedCount">0</strong>
+<div class="status-bar" id="statusBar" data-page-node-id="YpFCi13pxWC6n6xvRxIhNo">
+<span data-i18n="背景帧:" data-page-node-id="d7CH02yJjGt93vD3Vbsegq"></span> <strong id="bgFrameDisplay" data-page-node-id="DWS51XKuZa8GKGGDFCGHL6">帧1</strong> |
+<span data-i18n="已涂抹帧数:" data-page-node-id="6HHEGu5Yu5KH5j2nqGkjfU"></span> <strong id="maskedCount" data-page-node-id="2k526GM8SxFEJUmAkRBw80">0</strong>
 </div>
-<div class="frames-tabs" id="framesTabs"></div>
-<div class="edit-canvas-container">
-<canvas id="editCanvas"></canvas>
-<div class="edit-hint" id="editHint" style="display:block;cursor:pointer;">
-<span data-i18n="操作提示: 按住鼠标左键涂抹选择运动物体（右键擦除），绿色区域将被合成"></span>
-<div style="font-size:11px;margin-top:4px;color:#10b981;" data-i18n="👆 点击画面关闭此提示">👆 点击画面关闭此提示</div>
+<div class="frames-tabs" id="framesTabs" data-page-node-id="HZUMLw7a0GnS0XBDAjzy5M"></div>
+<div class="edit-canvas-container" data-page-node-id="gjcYRBrUzYojNoAGMC7NMT">
+<canvas id="editCanvas" data-page-node-id="GI2LDyXspVCUNrWY1yl1qp"></canvas>
+<div class="edit-hint" id="editHint" style="display:block;cursor:pointer;" data-page-node-id="CG70aFs6STlu2NACI3jMAu">
+<span data-i18n="操作提示: 按住鼠标左键涂抹选择运动物体（右键擦除），绿色区域将被合成" data-page-node-id="arb3YJLEElyNmBNowIzZ2D"></span>
+<div style="font-size:11px;margin-top:4px;color:#10b981;" data-i18n="👆 点击画面关闭此提示" data-page-node-id="rzuCNgCtmSY5ISjkSjpr4P">👆 点击画面关闭此提示</div>
 </div>
 </div>
-<div class="edit-actions">
-<button class="btn btn-warning btn-small" id="setBgBtn" data-i18n="🌲 设为背景帧">🌲 设为背景帧</button>
-<button class="btn btn-secondary btn-small" id="clearMaskBtn" data-i18n="清除当前涂抹">清除当前涂抹</button>
-<button class="btn btn-secondary btn-small" id="fillAllBtn" data-i18n="涂抹整个画面">涂抹整个画面</button>
-<button class="btn btn-secondary btn-small" id="helpBtn" data-i18n="❓ 帮助">❓ 帮助</button>
-<button class="btn btn-primary" id="composeBrushBtn" data-i18n="✨ 合成频闪照片">✨ 合成频闪照片</button>
+<div class="edit-actions" data-page-node-id="Rlaupb0opHCDbApGxOlxzd">
+<button class="btn btn-warning btn-small" id="setBgBtn" data-i18n="🌲 设为背景帧" data-page-node-id="pqbJeJ1EuS6sgvISWJeMMd">🌲 设为背景帧</button>
+<button class="btn btn-secondary btn-small" id="clearMaskBtn" data-i18n="清除当前涂抹" data-page-node-id="bI8B7x24gO1SbBaBFOp88J">清除当前涂抹</button>
+<button class="btn btn-secondary btn-small" id="fillAllBtn" data-i18n="涂抹整个画面" data-page-node-id="X57BrYcd7BpTQ4YTctexum">涂抹整个画面</button>
+<button class="btn btn-secondary btn-small" id="helpBtn" data-i18n="❓ 帮助" data-page-node-id="vo5so44XbIyGVDuCfBdAzd">❓ 帮助</button>
+<button class="btn btn-primary" id="composeBrushBtn" data-i18n="✨ 合成频闪照片" data-page-node-id="8j3FXbl1dEFHodDsZcs445">✨ 合成频闪照片</button>
 </div>
 </div>
 
 <!-- 结果区 -->
-<div class="card result-area" id="resultArea">
-<div class="result-header">
-<h3 data-i18n="📸 频闪照片">📸 频闪照片</h3>
-<div style="display:flex;gap:8px;flex-wrap:wrap;">
-<button class="btn btn-success btn-small" id="saveProjectBtn2" data-i18n="💾 保存项目">💾 保存项目</button>
+<div class="card result-area" id="resultArea" data-page-node-id="jcETzbdCPWfZr8FUjFj8qD">
+<div class="result-header" data-page-node-id="G4jLjuqCWqGPjDqeIsKP10">
+<h3 data-i18n="📸 频闪照片" data-page-node-id="bzQmCInLSCE7RIqkPkk7c5">📸 频闪照片</h3>
+<div style="display:flex;gap:8px;flex-wrap:wrap;" data-page-node-id="f4Dg2GKWWEBFGmjy8iHvJB">
+<button class="btn btn-success btn-small" id="saveProjectBtn2" data-i18n="💾 保存项目" data-page-node-id="3DXa8vqYukZqJKsHIW27Dn">💾 保存项目</button>
 </div>
 </div>
-<div class="result-image-container">
-<canvas id="previewCanvas"></canvas>
+<div class="result-image-container" data-page-node-id="KHxrRmWTgkzwy6i64YS0Wk">
+<canvas id="previewCanvas" data-page-node-id="fOSPJieAP9diDt8WDR5n8N"></canvas>
 </div>
-<div class="preview-section">
-<h4 data-i18n="🎚️ 帧预览控制">🎚️ 帧预览控制</h4>
-<div class="preview-controls">
-<label data-i18n="显示帧数：">显示帧数：</label>
-<div class="frame-slider-container">
-<div class="frame-slider-track"></div>
-<div class="frame-slider-progress" id="frameSliderProgress"></div>
-<input type="range" class="frame-slider" id="frameSlider" min="0" max="0" value="0">
-</div>
-</div>
-<div class="preview-info">
-<span id="previewCount" data-i18n="显示 0 / 0 帧">显示 0 / 0 帧</span>
-<span id="previewHint" data-i18n="← 拖动滑块查看不同帧组合 →">← 拖动滑块查看不同帧组合 →</span>
-</div>
-<div class="frame-indicator" id="frameIndicator"></div>
-<div class="threshold-control" id="thresholdControlAuto" style="display:none;">
-<label data-i18n="差异阈值：">差异阈值：</label>
-<input type="range" id="previewThreshold" min="0" max="100" value="20">
-<span class="threshold-value" id="thresholdValue">20</span>
+<div class="preview-section" data-page-node-id="Gu4VWoMwJ3m5qYxjo6rK0h">
+<h4 data-i18n="🎚️ 帧预览控制" data-page-node-id="x1Cq9Yo26EB9V1HDGdjUb5">🎚️ 帧预览控制</h4>
+<div class="preview-controls" data-page-node-id="UtoxAAQvyaGInruJSNK5H9">
+<label data-i18n="显示帧数：" data-page-node-id="5ERP2HCa8D0Xlvaly9buoC">显示帧数：</label>
+<div class="frame-slider-container" data-page-node-id="bQAzLueVw7ucWYKdCeljQB">
+<div class="frame-slider-track" data-page-node-id="woHZ0Su42eSSt5VHsBvpmI"></div>
+<div class="frame-slider-progress" id="frameSliderProgress" data-page-node-id="XjRueWtvkg6PgYBq7l6SrS"></div>
+<input type="range" class="frame-slider" id="frameSlider" min="0" max="0" value="0" data-page-node-id="koOMcTizqsnjZbcypCqBZ1">
 </div>
 </div>
-<div class="result-actions">
-<button class="btn btn-success save-preview-btn" id="savePreviewBtn" data-i18n="📥 保存当前预览">📥 保存当前预览</button>
-<button class="btn btn-primary" id="downloadBtn" data-i18n="📥 下载完整合成图">📥 下载完整合成图</button>
-<button class="btn btn-purple" id="shareToGalleryBtn" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;" data-i18n="🚀 分享到广场">🚀 分享到广场</button>
-<button class="btn btn-secondary" id="resetBtn" data-i18n="🔄 重新开始">🔄 重新开始</button>
+<div class="preview-info" data-page-node-id="zYtj4Z0TcCUjTzdCMQcFg0">
+<span id="previewCount" data-i18n="显示 0 / 0 帧" data-page-node-id="1x0NROR3MDmHny9Xz0x6Db">显示 0 / 0 帧</span>
+<span id="previewHint" data-i18n="← 拖动滑块查看不同帧组合 →" data-page-node-id="O4uAZvo4oo0rfdopXITT57">← 拖动滑块查看不同帧组合 →</span>
+</div>
+<div class="frame-indicator" id="frameIndicator" data-page-node-id="6TKjwyrVZ8H1f2wJZdkNOO"></div>
+<div class="threshold-control" id="thresholdControlAuto" style="display:none;" data-page-node-id="h3D99qD76RxpjG5tSmsE40">
+<label data-i18n="差异阈值：" data-page-node-id="wr7RkuXgGvO2xBzlByQiWC">差异阈值：</label>
+<input type="range" id="previewThreshold" min="0" max="100" value="20" data-page-node-id="SnpGb7JKv1MCDEjmeqcCWp">
+<span class="threshold-value" id="thresholdValue" data-page-node-id="IfgpuK5WA70gwT6rm7ukC6">20</span>
+</div>
+</div>
+<div class="result-actions" data-page-node-id="PqqFjLmZfCwg9xc1KEESHv">
+<button class="btn btn-success save-preview-btn" id="savePreviewBtn" data-i18n="📥 保存当前预览" data-page-node-id="aCPxFL3aPESl7oi2ZpkLrv">📥 保存当前预览</button>
+<button class="btn btn-primary" id="downloadBtn" data-i18n="📥 下载完整合成图" data-page-node-id="uXwSZ3GOEnPr9v8376h1Hl">📥 下载完整合成图</button>
+<button class="btn btn-purple" id="shareToGalleryBtn" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;" data-i18n="🚀 分享到广场" data-page-node-id="OyHt0qHIXyyBkNQiLcxvzj">🚀 分享到广场</button>
+<button class="btn btn-secondary" id="resetBtn" data-i18n="🔄 重新开始" data-page-node-id="AB2JLreYlQ3FifwX5eaIRh">🔄 重新开始</button>
 </div>
 </div>
 
@@ -2034,60 +2034,100 @@ window.addEventListener('message',(e)=>{
     }
 });
 
-// 自动从 work 详情页加载项目（sessionStorage 暂存的 .strobeproj 文本）
-// 触发条件：URL 带 ?autoload=1（来自 work 页「🚀 打开项目文件」按钮跳转）
-// 行为：取 sessionStorage 内文本 → 构造 File → 调 loadProjectFile 加载到画布
+// 自动从 work 详情页加载项目（v2：URL 传签名下载地址，不再经 sessionStorage）
+// 背景：涂抹模式项目文件含每帧 mask，体积常达 20-70MB；sessionStorage 配额仅 5-10MB，
+//       setItem 会抛 QuotaExceededError → 「🚀 打开项目文件」直接失败。
+//       自动模式无 mask、文件仅几百 KB，所以不受影响（这正是两种模式表现不同的原因）。
+// 触发条件：URL 带 ?autoload=1&projUrl=<签名地址>（来自 work 页「🚀 打开项目文件」按钮跳转）
+// 行为：取 projUrl → fetch 项目文件文本 → 构造 File → 调 loadProjectFile 加载到画布
 ;(function autoLoadProjectFromWork(){
     try {
         const params = new URLSearchParams(window.location.search);
-        // 参数可能在父页 URL 上：work 详情页 router.push('/tool?autoload=1') 跳到 React 壳页，
-        // 壳页用 iframe 嵌入 tool.html，此时 autoload=1 在父页而非 iframe 自身 URL。
-        let parentHasAutoload = false;
+        // 参数可能在父页 URL 上：work 详情页 router.push('/tool?autoload=1...') 跳到 React 壳页，
+        // 壳页用 iframe 嵌入 tool.html，此时参数在父页而非 iframe 自身 URL。
+        let parentParams = null;
         try {
-          parentHasAutoload = new URLSearchParams(window.parent.location.search).get('autoload') === '1';
+          parentParams = new URLSearchParams(window.parent.location.search);
         } catch (e) {}
+        const parentHasAutoload = !!parentParams && parentParams.get('autoload') === '1';
         if (params.get('autoload') !== '1' && !parentHasAutoload) return;
-        const text = sessionStorage.getItem('strobePendingProjectText');
-        const name = sessionStorage.getItem('strobePendingProjectName') || 'project.strobeproj';
-        const workTitle = sessionStorage.getItem('strobePendingProjectWorkTitle') || '';
-        // 取完立即清理 sessionStorage——避免 F5 后还残留
-        sessionStorage.removeItem('strobePendingProjectText');
-        sessionStorage.removeItem('strobePendingProjectName');
-        sessionStorage.removeItem('strobePendingProjectWorkTitle');
-        if (!text || text.length < 50) {
-            console.warn('[autoload] sessionStorage 未找到项目数据（可能跨 tab 跳转未共享）');
+
+        // 清理历史残留键（旧版写的项目文本可能已占满配额）
+        try {
+            sessionStorage.removeItem('strobePendingProjectText');
+            sessionStorage.removeItem('strobePendingProjectName');
+            sessionStorage.removeItem('strobePendingProjectWorkTitle');
+        } catch (e) {}
+
+        // 自身 URL 优先，回退父页 URL
+        const getParam = (k) => {
+            const v = params.get(k);
+            if (v !== null && v !== '') return v;
+            try {
+                const pv = parentParams ? parentParams.get(k) : null;
+                return (pv !== null && pv !== '') ? pv : null;
+            } catch (e) { return null; }
+        };
+        const projUrl = getParam('projUrl');
+        const name = getParam('projName') || 'project.strobeproj';
+        const workTitle = getParam('workTitle') || '';
+
+        if (!projUrl) {
+            console.warn('[autoload] URL 缺少 projUrl 参数');
             if (typeof showError === 'function') {
-                showError('自动加载失败：未找到项目数据。请回到作品详情页，用「下载项目文件」后手动导入。');
+                showError('自动加载失败：未找到项目文件地址。请回到作品详情页，用「下载项目文件」后手动导入。');
             }
             return;
         }
+
+        // 提前发起下载，与 DOM 就绪并行（不再写入任何 Storage，避免配额问题）
+        let textPromiseErr = null;
+        const textPromise = (async () => {
+            const resp = await fetch(projUrl);
+            if (!resp.ok) throw new Error('项目文件获取失败: HTTP ' + resp.status);
+            const t = await resp.text();
+            if (!t || t.length < 50) throw new Error('项目文件内容为空');
+            return t;
+        })().catch((e) => { textPromiseErr = e; return null; });
+
         // IIFE 在第二个 <script> 末尾同步执行，但 $('importProjectInput').onchange=handleProjectFileSelect
         // 是在 document.addEventListener('DOMContentLoaded', ()=>{...}) 内部，需 DOM ready 后才会绑定。
         // 等浏览器 fire DOMContentLoaded + listener 执行完再触发 change 事件。
-        const tryInject = () => {
+        const tryInject = async () => {
             try {
-                const file = new File([text], name, { type: 'application/octet-stream' });
-                const dt = new DataTransfer();
-                dt.items.add(file);
+                const st = document.getElementById('status');
+                if (st) st.textContent = '⏳ 正在下载项目文件...';
+                const text = await textPromise;
+                if (textPromiseErr || !text) {
+                    if (typeof showError === 'function') {
+                        showError('自动加载失败：' + ((textPromiseErr && textPromiseErr.message) || '项目文件为空') +
+                            '<br><br>请回到作品详情页，用「下载项目文件」后手动导入。');
+                    }
+                    return;
+                }
                 const input = document.getElementById('importProjectInput');
                 if (!input) {
                     console.warn('[autoload] importProjectInput 元素未就绪，重试...');
                     setTimeout(tryInject, 100);
                     return;
                 }
+                const file = new File([text], name, { type: 'application/octet-stream' });
+                const dt = new DataTransfer();
+                dt.items.add(file);
                 input.files = dt.files;
                 input.dispatchEvent(new Event('change', { bubbles: true }));
-                // 清理 URL（与成功/失败无关）：自己的 + 父页的，避免 F5 刷新后重触发并报错
+                // 清理 URL（与成功/失败无关）：自己的 + 父页的，避免 F5 刷新后重触发并重复下载
                 requestAnimationFrame(() => {
+                    const KEYS = ['autoload', 'projUrl', 'projName', 'workTitle'];
                     try {
                         const u = new URL(window.location.href);
-                        u.searchParams.delete('autoload');
+                        KEYS.forEach((k) => u.searchParams.delete(k));
                         window.history.replaceState({}, '', u.toString());
                     } catch (e) {}
                     try {
                         const pu = new URL(window.parent.location.href);
                         if (pu.searchParams.get('autoload') === '1') {
-                            pu.searchParams.delete('autoload');
+                            KEYS.forEach((k) => pu.searchParams.delete(k));
                             window.parent.history.replaceState({}, '', pu.toString());
                         }
                     } catch (e) {}
@@ -2115,20 +2155,20 @@ window.addEventListener('message',(e)=>{
 })();
 });
 </script>
-<div class="wm-overlay" id="wmOverlay">
-  <div class="wm-modal">
-    <button class="wm-close" title="关闭">&times;</button>
-    <h3 data-i18n="免费版导出提示">免费版导出提示</h3>
-    <p class="wm-sub" data-i18n="免费版导出的图片将带有 StrobeArt 水印（右下角）。选择下方任一方式去除水印后，即可下载干净原图：">免费版导出的图片将带有 StrobeArt 水印（右下角）。选择下方任一方式去除水印后，即可下载干净原图：</p>
-    <div class="wm-opt wm-opt-upgrade">
-      <div class="wm-opt-title" data-i18n="① 升级会员（去 /pricing）">① 升级会员（去 /pricing）</div>
-      <div class="wm-opt-desc" data-i18n="单次 ¥9.9 / 月卡 ¥29 / 年卡 ¥128 —— 无水印 + 不限视频时长">单次 ¥9.9 / 月卡 ¥29 / 年卡 ¥128 —— 无水印 + 不限视频时长</div>
+<div class="wm-overlay" id="wmOverlay" data-page-node-id="cU31Cd7EebzdWITdFJ3VuQ">
+  <div class="wm-modal" data-page-node-id="Tbj0I063dAWXGGcFT8Jc4V">
+    <button class="wm-close" title="关闭" data-page-node-id="Gm4wKYetmMYZzD6oK7EF6C">&times;</button>
+    <h3 data-i18n="免费版导出提示" data-page-node-id="6Zs6XAo1xWdXhybz8VoGLm">免费版导出提示</h3>
+    <p class="wm-sub" data-i18n="免费版导出的图片将带有 StrobeArt 水印（右下角）。选择下方任一方式去除水印后，即可下载干净原图：" data-page-node-id="kKP0Z4QmtjuTZyxIDaTRZG">免费版导出的图片将带有 StrobeArt 水印（右下角）。选择下方任一方式去除水印后，即可下载干净原图：</p>
+    <div class="wm-opt wm-opt-upgrade" data-page-node-id="WOBPYcCP6Vf3EeDBezuq8E">
+      <div class="wm-opt-title" data-i18n="① 升级会员（去 /pricing）" data-page-node-id="ck7mZWqj3ul9tepuybedPc">① 升级会员（去 /pricing）</div>
+      <div class="wm-opt-desc" data-i18n="单次 ¥9.9 / 月卡 ¥29 / 年卡 ¥128 —— 无水印 + 不限视频时长" data-page-node-id="yGbWNExww7Klu0LKh9y0r8">单次 ¥9.9 / 月卡 ¥29 / 年卡 ¥128 —— 无水印 + 不限视频时长</div>
     </div>
-    <div class="wm-opt wm-purple wm-opt-redeem">
-      <div class="wm-opt-title" data-i18n="② 用 30 积分兑换「去水印」额度（去 /profile）">② 用 30 积分兑换「去水印」额度（去 /profile）</div>
-      <div class="wm-opt-desc" data-i18n="消耗 30 积分，本次导出即获无水印原图（额度用完需再次兑换）">消耗 30 积分，本次导出即获无水印原图（额度用完需再次兑换）</div>
+    <div class="wm-opt wm-purple wm-opt-redeem" data-page-node-id="kaVV8pGM31yx2I0GPJ4O3S">
+      <div class="wm-opt-title" data-i18n="② 用 30 积分兑换「去水印」额度（去 /profile）" data-page-node-id="6zDe6vXYVzIxGSPrzbAUl1">② 用 30 积分兑换「去水印」额度（去 /profile）</div>
+      <div class="wm-opt-desc" data-i18n="消耗 30 积分，本次导出即获无水印原图（额度用完需再次兑换）" data-page-node-id="e96G2c4f3asRmOKH5d8k5s">消耗 30 积分，本次导出即获无水印原图（额度用完需再次兑换）</div>
     </div>
-    <button class="wm-still" data-i18n="仍下载带水印的图片">仍下载带水印的图片</button>
+    <button class="wm-still" data-i18n="仍下载带水印的图片" data-page-node-id="WRzEfda92gKXZH87npE2ls">仍下载带水印的图片</button>
   </div>
 </div>
 </body>
