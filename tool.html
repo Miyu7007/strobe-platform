@@ -1650,12 +1650,15 @@ function base64ToUint8(b64){
 function maskBitPack(u8){
     const total=u8.length;
     const out=new Uint8Array((total+7)>>3);
-    for(let i=0;i<total;i++){ if(u8[i]>127) out[i>>3]|=(1<<(7-(i&7))); }
+    // ⚠️ 阈值必须是 >0：涂抹 mask 是 0/1 二值（paintBrushDot 里 frame.mask[idx]=1），
+    //    若用 >127 会把全部涂抹判成未涂抹 → 笔刷静默全丢。
+    for(let i=0;i<total;i++){ if(u8[i]>0) out[i>>3]|=(1<<(7-(i&7))); }
     return out;
 }
 function maskBitUnpack(packed,total){
+    // 还原成 1/0（不是 255）：paintBrushDot / 擦除逻辑用 ===1 / ===0 严格判断
     const out=new Uint8Array(total);
-    for(let i=0;i<total;i++){ out[i]=((packed[i>>3]>>(7-(i&7)))&1)?255:0; }
+    for(let i=0;i<total;i++){ out[i]=((packed[i>>3]>>(7-(i&7)))&1)?1:0; }
     return out;
 }
 async function packMask(u8){
