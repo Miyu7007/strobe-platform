@@ -2149,75 +2149,230 @@ window.addEventListener('message',(e)=>{
             return;
         }
 
-        // 提前发起下载，与 DOM 就绪并行（不再写入任何 Storage，避免配额问题）
-        let textPromiseErr = null;
-        const textPromise = (async () => {
-            const resp = await fetch(projUrl);
-            if (!resp.ok) throw new Error('项目文件获取失败: HTTP ' + resp.status);
-            const t = await resp.text();
-            if (!t || t.length < 50) throw new Error('项目文件内容为空');
-            return t;
-        })().catch((e) => { textPromiseErr = e; return null; });
+        // ===== 下载源：R2（Cloudflare）优先，失败自动回退 Supabase =====
+        // Supabase 免费版每月只有 5GB 出流量，项目文件动辄几 MB；R2 出流量免费且国内可直连。
+        // 尚未迁移到 R2 的对象会返回 404/403，此时自动回退原始 Supabase 地址，用户无感。
+        var R2_PUBLIC_BASE = 'https://pub-840aaf9159484ec8b31b7e3d199fef49.r2.dev';
+        var SUPA_WORKS_RE = /https:\/\/swmiolxxyzlcwdgnyyky\.supabase\.co\/storage\/v1\/object\/(?:public|sign)\/works\/([^?\s]+)/;
+        function r2VariantOf(u){
+            try{
+                var m = SUPA_WORKS_RE.exec(String(u || ''));
+                if (!m) return null;
+                return R2_PUBLIC_BASE + '/' + m[1].split('/').map(encodeURIComponent).join('/');
+            }catch(e){ return null; }
+        }
+
+        // ===== 进度卡片 UI（不再只有一句看不到头的「正在下载项目文件」）=====
+        var card = null, elTitle = null, elBar = null, elDetail = null, elActions = null;
+        function ensureCard(){
+            if (card && elTitle) return card;
+            card = document.createElement('div');
+            card.id = 'autoloadCard';
+            card.style.cssText = 'margin:12px 0;padding:14px 16px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border:1px solid #334155;border-radius:12px;color:#e2e8f0;font-size:14px;line-height:1.6';
+            card.innerHTML =
+                '<div id="alTitle" style="font-weight:600">⏳ 正在下载项目文件…</div>' +
+                '<div style="margin-top:10px;height:8px;background:#0b1220;border-radius:999px;overflow:hidden">' +
+                    '<div id="alBar" style="height:100%;width:0%;background:linear-gradient(90deg,#38bdf8,#6366f1);transition:width .2s"></div>' +
+                '</div>' +
+                '<div id="alDetail" style="margin-top:8px;font-size:12.5px;color:#94a3b8">正在连接…</div>' +
+                '<div id="alActions" style="margin-top:12px;display:none;gap:10px;flex-wrap:wrap"></div>';
+            var st = document.getElementById('status');
+            if (st && st.parentNode) st.parentNode.insertBefore(card, st.nextSibling);
+            else if (document.body) document.body.appendChild(card);
+            elTitle = card.querySelector('#alTitle');
+            elBar = card.querySelector('#alBar');
+            elDetail = card.querySelector('#alDetail');
+            elActions = card.querySelector('#alActions');
+            return card;
+        }
+        function fmtSize(n){
+            n = Number(n) || 0;
+            if (n < 1024) return n + ' B';
+            if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+            return (n / 1024 / 1024).toFixed(2) + ' MB';
+        }
+        function setTitle(s){ ensureCard(); elTitle.textContent = s; }
+        function paintProgress(received, total, note){
+            ensureCard();
+            var pct = total > 0 ? Math.min(100, Math.round(received / total * 100)) : 0;
+            if (total > 0) {
+                elBar.style.width = pct + '%';
+                elBar.style.opacity = '1';
+                elDetail.textContent = fmtSize(received) + ' / ' + fmtSize(total) + '（' + pct + '%）' + (note ? ' · ' + note : '');
+            } else {
+                elBar.style.width = '100%';
+                elBar.style.opacity = '0.55';
+                elDetail.textContent = '已下载 ' + fmtSize(received) + '（服务器未返回总大小）' + (note ? ' · ' + note : '');
+            }
+        }
+
+        // ===== 带真实字节进度 + 超时/停滞检测 + 可中断的下载 =====
+        function fetchWithProgress(url, onProgress, opt){
+            return new Promise(function(resolve, reject){
+                var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+                var settled = false;
+                var stallTimer = null;
+                var totalTimer = setTimeout(function(){
+                    fail('下载超时：' + Math.round(opt.timeoutMs / 1000) + ' 秒仍未完成（' + opt.label + '）');
+                }, opt.timeoutMs);
+                function armStall(){
+                    if (stallTimer) clearTimeout(stallTimer);
+                    stallTimer = setTimeout(function(){
+                        fail('下载中断：' + Math.round(opt.stallMs / 1000) + ' 秒没有收到任何数据（' + opt.label + '）');
+                    }, opt.stallMs);
+                }
+                function cleanup(){ clearTimeout(totalTimer); if (stallTimer) clearTimeout(stallTimer); }
+                function fail(msg){
+                    if (settled) return;
+                    settled = true; cleanup();
+                    try { if (ac) ac.abort(); } catch (e) {}
+                    reject(new Error(msg));
+                }
+                function ok(v){ if (settled) return; settled = true; cleanup(); resolve(v); }
+                armStall();
+                var init = { cache: 'no-store' };
+                if (ac) init.signal = ac.signal;
+                fetch(url, init).then(function(resp){
+                    if (!resp.ok) {
+                        // Supabase/R2 的错误体里常有具体原因，读出来便于定位
+                        resp.text().then(function(body){
+                            var extra = '';
+                            try { var j = JSON.parse(body); extra = j && (j.message || j.error || ''); } catch (e) { extra = String(body || '').slice(0, 120); }
+                            fail('HTTP ' + resp.status + '（' + opt.label + '）' + (extra ? '：' + extra : ''));
+                        }, function(){ fail('HTTP ' + resp.status + '（' + opt.label + '）'); });
+                        return;
+                    }
+                    var total = parseInt(resp.headers.get('content-length') || '0', 10) || 0;
+                    try { onProgress(0, total); } catch (e) {}
+                    if (!resp.body || typeof resp.body.getReader !== 'function') {
+                        resp.blob().then(function(b){ try { onProgress(b.size, b.size || total); } catch (e) {} ok(b); },
+                                        function(e){ fail((e && e.message) || '读取响应失败'); });
+                        return;
+                    }
+                    var reader = resp.body.getReader();
+                    var parts = [], received = 0;
+                    (function pump(){
+                        reader.read().then(function(r){
+                            if (settled) return;
+                            if (r.done) { ok(new Blob(parts, { type: 'application/octet-stream' })); return; }
+                            parts.push(r.value);
+                            received += r.value.length;
+                            armStall();
+                            try { onProgress(received, total); } catch (e) {}
+                            pump();
+                        }, function(e){ fail((e && e.message) || '连接中断'); });
+                    })();
+                }, function(e){
+                    fail((e && e.message) ? e.message : '网络错误，无法连接下载源');
+                });
+            });
+        }
+
+        // ===== 依次尝试各下载源 =====
+        var sources = [];
+        var r2ProjUrl = r2VariantOf(projUrl);
+        if (r2ProjUrl) sources.push({ url: r2ProjUrl, label: 'R2 加速源', timeoutMs: 120000, stallMs: 15000 });
+        sources.push({ url: projUrl, label: 'Supabase 源', timeoutMs: 300000, stallMs: 30000 });
+
+        function downloadProject(){
+            var i = 0, lastErr = null;
+            function next(){
+                if (i >= sources.length) { showFail(lastErr); return; }
+                var s = sources[i++];
+                setTitle('⏳ 正在下载项目文件…');
+                ensureCard();
+                elBar.style.background = 'linear-gradient(90deg,#38bdf8,#6366f1)';
+                elBar.style.width = '0%';
+                elActions.style.display = 'none';
+                elActions.innerHTML = '';
+                elDetail.textContent = '正在连接 ' + s.label + '…';
+                console.log('[autoload] 尝试下载源：' + s.label + ' → ' + s.url.slice(0, 120));
+                fetchWithProgress(s.url, function(rec, tot){ paintProgress(rec, tot, s.label); }, s)
+                    .then(function(blob){
+                        if (!blob || blob.size < 50) throw new Error('项目文件内容为空（' + s.label + '）');
+                        setTitle('✅ 下载完成（' + fmtSize(blob.size) + '），正在加载…');
+                        inject(new File([blob], name, { type: 'application/octet-stream' }));
+                    })
+                    .catch(function(e){
+                        console.warn('[autoload] ' + s.label + ' 失败:', e && e.message);
+                        lastErr = e;
+                        next();
+                    });
+            }
+            next();
+        }
+
+        function clearUrlParams(){
+            requestAnimationFrame(() => {
+                const KEYS = ['autoload', 'projUrl', 'projName', 'workTitle'];
+                try {
+                    const u = new URL(window.location.href);
+                    KEYS.forEach((k) => u.searchParams.delete(k));
+                    window.history.replaceState({}, '', u.toString());
+                } catch (e) {}
+                try {
+                    const pu = new URL(window.parent.location.href);
+                    if (pu.searchParams.get('autoload') === '1') {
+                        KEYS.forEach((k) => pu.searchParams.delete(k));
+                        window.parent.history.replaceState({}, '', pu.toString());
+                    }
+                } catch (e) {}
+            });
+        }
 
         // IIFE 在第二个 <script> 末尾同步执行，但 $('importProjectInput').onchange=handleProjectFileSelect
         // 是在 document.addEventListener('DOMContentLoaded', ()=>{...}) 内部，需 DOM ready 后才会绑定。
-        // 等浏览器 fire DOMContentLoaded + listener 执行完再触发 change 事件。
-        const tryInject = async () => {
-            try {
-                const st = document.getElementById('status');
-                if (st) st.textContent = '⏳ 正在下载项目文件...';
-                const text = await textPromise;
-                if (textPromiseErr || !text) {
-                    if (typeof showError === 'function') {
-                        showError('自动加载失败：' + ((textPromiseErr && textPromiseErr.message) || '项目文件为空') +
-                            '<br><br>请回到作品详情页，用「下载项目文件」后手动导入。');
-                    }
-                    return;
-                }
-                const input = document.getElementById('importProjectInput');
-                if (!input) {
-                    console.warn('[autoload] importProjectInput 元素未就绪，重试...');
-                    setTimeout(tryInject, 100);
-                    return;
-                }
-                const file = new File([text], name, { type: 'application/octet-stream' });
-                const dt = new DataTransfer();
-                dt.items.add(file);
-                input.files = dt.files;
-                input.dispatchEvent(new Event('change', { bubbles: true }));
-                // 清理 URL（与成功/失败无关）：自己的 + 父页的，避免 F5 刷新后重触发并重复下载
-                requestAnimationFrame(() => {
-                    const KEYS = ['autoload', 'projUrl', 'projName', 'workTitle'];
-                    try {
-                        const u = new URL(window.location.href);
-                        KEYS.forEach((k) => u.searchParams.delete(k));
-                        window.history.replaceState({}, '', u.toString());
-                    } catch (e) {}
-                    try {
-                        const pu = new URL(window.parent.location.href);
-                        if (pu.searchParams.get('autoload') === '1') {
-                            KEYS.forEach((k) => pu.searchParams.delete(k));
-                            window.parent.history.replaceState({}, '', pu.toString());
-                        }
-                    } catch (e) {}
-                });
-                if (workTitle) {
-                    const s = document.getElementById('status');
-                    if (s) s.textContent = '✅ 已自动加载「' + workTitle + '」';
-                }
-                console.log('[autoload] 已通过 importProjectInput.change 触发加载：' + name);
-            } catch (e) {
-                console.warn('[autoload] 注入文件失败:', e);
-                if (typeof showError === 'function') {
-                    showError('自动加载失败: ' + (e.message || String(e)));
-                }
+        // 因此元素没就绪就等 100ms 重试。
+        function inject(file){
+            const input = document.getElementById('importProjectInput');
+            if (!input) {
+                console.warn('[autoload] importProjectInput 元素未就绪，重试...');
+                setTimeout(function(){ inject(file); }, 100);
+                return;
             }
-        };
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => setTimeout(tryInject, 50));
-        } else {
-            setTimeout(tryInject, 50);
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            // 清理 URL（与成功/失败无关）：自己的 + 父页的，避免 F5 刷新后重触发并重复下载
+            clearUrlParams();
+            if (workTitle) {
+                const s = document.getElementById('status');
+                if (s) s.textContent = '✅ 已自动加载「' + workTitle + '」';
+            }
+            console.log('[autoload] 已通过 importProjectInput.change 触发加载：' + name + '（' + fmtSize(file.size) + '）');
+            setTimeout(function(){ if (card && card.parentNode) card.parentNode.removeChild(card); }, 1500);
         }
+
+        function mkBtn(text, style, onClick){
+            var b = document.createElement('button');
+            b.textContent = text;
+            b.style.cssText = 'padding:8px 14px;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;' + style;
+            b.onclick = onClick;
+            return b;
+        }
+        function showFail(err){
+            ensureCard();
+            setTitle('❌ 项目文件下载失败');
+            elBar.style.width = '100%';
+            elBar.style.background = '#ef4444';
+            elBar.style.opacity = '1';
+            elDetail.textContent = (err && err.message) || '未知错误';
+            elActions.style.display = 'flex';
+            elActions.innerHTML = '';
+            elActions.appendChild(mkBtn('🔄 重试下载', 'background:#38bdf8;color:#04202e;', function(){ downloadProject(); }));
+            elActions.appendChild(mkBtn('⬇️ 直接下载文件', 'background:#334155;color:#e2e8f0;', function(){ window.open(projUrl, '_blank'); }));
+            elActions.appendChild(mkBtn('← 返回上一页', 'background:transparent;color:#94a3b8;border:1px solid #334155;', function(){
+                try { window.history.back(); } catch (e) {}
+            }));
+            var tip = document.createElement('div');
+            tip.style.cssText = 'flex-basis:100%;margin-top:4px;font-size:12px;color:#94a3b8';
+            tip.innerHTML = '若一直失败：项目文件可能较大或签名链接已过期（1 小时有效）。可返回作品详情页重新点击「打开项目文件」，或用「下载项目文件」后在工具页手动导入。';
+            elActions.appendChild(tip);
+        }
+
+        // 立即发起（与 DOM 就绪并行，不写入任何 Storage）
+        downloadProject();
     } catch (e) {
         console.warn('[autoload] IIFE 失败:', e);
     }
