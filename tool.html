@@ -184,22 +184,10 @@
   window.t = t;
   window.getToolLocale = getToolLocale;
   window.setToolLocale = setToolLocale;
-  // 语言切换器
-  function buildSwitcher(){
-    var d = document.createElement('div');
-    d.id = 'langSwitcher';
-    d.innerHTML = '<button id="langZh" class="ls-btn">中文</button><button id="langEn" class="ls-btn">EN</button>';
-    d.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;display:flex;gap:4px;background:rgba(0,0,0,0.45);padding:4px;border-radius:8px;backdrop-filter:blur(4px)';
-    document.body.appendChild(d);
-    var st = document.createElement('style');
-    st.textContent = '#langSwitcher .ls-btn{background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer}#langSwitcher .ls-btn.active{background:#667eea;color:#fff;border-color:#667eea}';
-    document.head.appendChild(st);
-    document.getElementById('langZh').onclick = function(){ setToolLocale('zh'); };
-    document.getElementById('langEn').onclick = function(){ setToolLocale('en'); };
-    applyToolI18n();
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildSwitcher);
-  else buildSwitcher();
+  // 语言切换器：已移除页面内浮动按钮（顶部导航栏已有「中文/EN」，且共用 strobe-locale 键联动）。
+  // 保留 applyToolI18n 初始化 + storage 监听（见下方），父站切换语言时 iframe 内容自动跟随。
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyToolI18n);
+  else applyToolI18n();
   // 父站切换语言时同步
   window.addEventListener('storage', function(e){ if (e.key === STORAGE_KEY) applyToolI18n(); });
 })();
