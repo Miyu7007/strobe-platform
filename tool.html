@@ -153,7 +153,23 @@
     '📤 我已转码，重新上传': '📤 I\'ve transcoded, re-upload',
     '忽略，继续尝试处理': 'Ignore and keep trying',
     '打开视频 → 格式选 <strong>MP4</strong> → 视频编码 <strong>H.264 (x264)</strong> → <strong>Start</strong>': 'Open video → Format <strong>MP4</strong> → Video codec <strong>H.264 (x264)</strong> → <strong>Start</strong>',
-    '媒体 → 转换/保存 → 配置文件选 <strong>Video - H.264 + MP3 (MP4)</strong> → 开始': 'Media → Convert/Save → Profile <strong>Video - H.264 + MP3 (MP4)</strong> → Start'
+    '媒体 → 转换/保存 → 配置文件选 <strong>Video - H.264 + MP3 (MP4)</strong> → 开始': 'Media → Convert/Save → Profile <strong>Video - H.264 + MP3 (MP4)</strong> → Start',
+    '用满窗口内全部原生帧（推荐）': 'Use all native frames in window (recommended)',
+    '勾选后「提取帧数」被忽略，自动改为窗口内实际帧数——频闪图球距严格均匀、不缺球。取消勾选才按上面填的帧数抽稀（帧数<原生帧数时必然出现跳空，属正常现象）。': 'When checked, \"Frame Count\" is ignored and the window\'s actual frame count is used — strobe spacing stays strictly even with no missing balls. Uncheck to thin manually (gaps are unavoidable when count < native frames).',
+    '📐 AI 运动分析（手动标记模式）': '📐 AI Motion Analysis (manual marking)',
+    '🖌 涂抹选物体': '🖌 Brush-select object',
+    '🖐 逐个描轮廓': '🖐 Trace outlines',
+    '📏 测量尺寸': '📏 Measure size',
+    '↩ 撤销上一个': '↩ Undo last',
+    '🗑 清除全部标记': '🗑 Clear all marks',
+    '🖌 画笔粗细：': '🖌 Brush size:',
+    '缺失时刻在：': 'Missing moments at:',
+    '最后面（前几个时刻有物体）': 'At the end (earlier moments have the object)',
+    '最前面（后几个时刻有物体）': 'At the start (later moments have the object)',
+    '中间某处（按间距自动推断）': 'Somewhere between (inferred from spacing)',
+    '实际拍摄帧率：': 'Actual capture fps:',
+    '线段真实长度：': 'Real length of the line:',
+    '🤖 计算速度/加速度': '🤖 Compute velocity/acceleration',
   };
   function getToolLocale(){ try { return localStorage.getItem(STORAGE_KEY) || 'zh'; } catch(e){ return 'zh'; } }
   function setToolLocale(l){
@@ -363,6 +379,25 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
 .wm-still:hover{background:rgba(255,255,255,0.06);color:#fff}
 .wm-close{position:absolute;top:12px;right:14px;font-size:20px;color:#888;cursor:pointer;line-height:1;border:none;background:none}
 .wm-close:hover{color:#fff}
+/* ===== 运动分析（时间间隔 + 速度/加速度） ===== */
+.analysis-card{display:none}
+.analysis-inputs{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.analysis-inputs label{font-size:13px;color:#aaa}
+.analysis-inputs input{width:120px;padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:13px}
+.analysis-inputs select{padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:13px}
+.analysis-hint{font-size:11px;color:#888;margin-bottom:10px;line-height:1.6}
+.analysis-info{font-size:12px;color:#a5b4fc;margin-bottom:10px;line-height:1.7}
+.analysis-info strong{color:#fcd34d}
+.analysis-table-wrap{overflow-x:auto;margin-top:10px}
+.analysis-table{width:100%;border-collapse:collapse;font-size:12px;color:#ddd}
+.analysis-table th,.analysis-table td{border:1px solid rgba(255,255,255,0.12);padding:6px 8px;text-align:center}
+.analysis-table th{background:rgba(102,126,234,0.18);color:#c7d2fe}
+.analysis-table td:first-child{color:#a5b4fc;font-weight:bold}
+.formula-box{margin-top:14px;background:rgba(0,0,0,0.3);border:1px solid rgba(102,126,234,0.3);border-radius:10px;padding:14px;font-size:12px;color:#cbd5e1;line-height:1.9}
+.formula-box h5{color:#a5b4fc;margin-bottom:8px;font-size:13px}
+.formula-box code{background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px;font-family:ui-monospace,Menlo,Consolas,monospace;color:#fcd34d;font-size:11px}
+.ai-summary{margin-top:12px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:12px;font-size:12px;color:#a7f3d0;line-height:1.8}
+.ai-summary strong{color:#fff}
 </style>
 </head>
 <body data-page-node-id="5xIsEkiQTBYpaETnCds7ah">
@@ -430,7 +465,14 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
 <div class="settings" id="settings" data-page-node-id="VTLeGfaRpsKwuimQKS50dX">
 <div class="setting-row" data-page-node-id="XeTOxT6CL6TU6d1nS6NfAy">
 <label data-i18n="提取帧数" data-page-node-id="nL7cFEGZG53lhLCyxDUfWg">提取帧数</label>
-<input type="number" id="frameCount" value="8" min="2" max="20" data-page-node-id="3akGql4yu7oU636anErazk">
+<input type="number" id="frameCount" value="8" min="2" max="60" data-page-node-id="3akGql4yu7oU636anErazk">
+</div>
+<div class="setting-row" style="align-items:flex-start;">
+<label style="font-size:11px;line-height:1.5;color:#a5b4fc;cursor:pointer;">
+<input type="checkbox" id="useAllNative" checked style="vertical-align:middle;margin-right:4px;">
+<span data-i18n="用满窗口内全部原生帧（推荐）">用满窗口内全部原生帧（推荐）</span><br>
+<span style="color:#94a3b8;font-weight:normal;" data-i18n="勾选后「提取帧数」被忽略，自动改为窗口内实际帧数——频闪图球距严格均匀、不缺球。取消勾选才按上面填的帧数抽稀（帧数<原生帧数时必然出现跳空，属正常现象）。">勾选后「提取帧数」被忽略，自动改为窗口内实际帧数——频闪图球距严格均匀、不缺球。取消勾选才按上面填的帧数抽稀（帧数&lt;原生帧数时必然出现跳空，属正常现象）。</span>
+</label>
 </div>
 <button class="btn btn-primary" id="extractBtn" data-i18n="🎞️ 提取帧" data-page-node-id="BWx96ge7nQUFxDzLagDHpB">🎞️ 提取帧</button>
 </div>
@@ -528,6 +570,8 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
 </div>
 <div class="result-image-container" data-page-node-id="KHxrRmWTgkzwy6i64YS0Wk">
 <canvas id="previewCanvas" data-page-node-id="fOSPJieAP9diDt8WDR5n8N"></canvas>
+<canvas id="annoCanvas" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;"></canvas>
+<canvas id="toolCanvas" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;cursor:crosshair;"></canvas>
 </div>
 <div class="preview-section" data-page-node-id="Gu4VWoMwJ3m5qYxjo6rK0h">
 <h4 data-i18n="🎚️ 帧预览控制" data-page-node-id="x1Cq9Yo26EB9V1HDGdjUb5">🎚️ 帧预览控制</h4>
@@ -549,6 +593,51 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
 <input type="range" id="previewThreshold" min="0" max="100" value="20" data-page-node-id="SnpGb7JKv1MCDEjmeqcCWp">
 <span class="threshold-value" id="thresholdValue" data-page-node-id="IfgpuK5WA70gwT6rm7ukC6">20</span>
 </div>
+</div>
+<div class="analysis-card" id="analysisCard" style="display:none;margin-top:20px;padding:16px;background:rgba(0,0,0,0.25);border:1px solid rgba(102,126,234,0.25);border-radius:12px;">
+  <h4 style="color:#a5b4fc;margin-bottom:6px;font-size:15px;" data-i18n="📐 AI 运动分析（手动标记模式）">📐 AI 运动分析（手动标记模式）</h4>
+  <div class="analysis-hint">操作步骤：用下列任一种方式标记每个运动物体影像的位置（<strong>按运动时间先后顺序</strong>，大致即可）：<strong style="color:#38bdf8;">🖌 涂抹选物体</strong>（更快——调好画笔粗细后在物体上拖一笔，松手按<strong>涂抹区域质心</strong>定位）或 <strong style="color:#10b981;">🖐 逐个描轮廓</strong>（沿边缘画一圈）；画错了点「↩ 撤销」，物体没入画面的时刻可不描。然后点 <strong style="color:#fcd34d;">📏 测量尺寸</strong> 在物体上拖一条线，输入其真实长度后点「计算」，即得各时刻速度与加速度。标记数少于帧数时会询问缺失时刻位置以保证时间对齐。</div>
+  <div class="analysis-inputs">
+    <button class="btn btn-secondary btn-small" id="brushObjBtn" data-i18n="🖌 涂抹选物体">🖌 涂抹选物体</button>
+    <button class="btn btn-secondary btn-small" id="paintObjBtn" data-i18n="🖐 逐个描轮廓">🖐 逐个描轮廓</button>
+    <button class="btn btn-secondary btn-small" id="measureBtn" data-i18n="📏 测量尺寸">📏 测量尺寸</button>
+    <button class="btn btn-secondary btn-small" id="undoMarkBtn" data-i18n="↩ 撤销上一个">↩ 撤销上一个</button>
+    <button class="btn btn-secondary btn-small" id="clearMarkBtn" data-i18n="🗑 清除全部标记">🗑 清除全部标记</button>
+    <span id="manualStatus" style="font-size:12px;color:#a5b4fc;"></span>
+  </div>
+  <div class="analysis-inputs" style="margin-top:8px;align-items:center;">
+    <label style="font-size:12px;color:#a5b4fc;" data-i18n="🖌 画笔粗细：">🖌 画笔粗细：</label>
+    <input type="range" id="markBrushSize" min="8" max="80" value="24" style="width:150px;vertical-align:middle;">
+    <span id="markBrushVal" style="font-size:12px;color:#38bdf8;margin-left:4px;"></span>
+  </div>
+  <div class="analysis-inputs" id="missingRow" style="display:none;">
+    <label id="missingLabel" data-i18n="缺失时刻在：">缺失时刻在：</label>
+    <select id="missingPos">
+      <option value="end" selected data-i18n="最后面（前几个时刻有物体）">最后面（前几个时刻有物体）</option>
+      <option value="start" data-i18n="最前面（后几个时刻有物体）">最前面（后几个时刻有物体）</option>
+      <option value="auto" data-i18n="中间某处（按间距自动推断）">中间某处（按间距自动推断）</option>
+    </select>
+  </div>
+  <div class="analysis-inputs">
+    <label data-i18n="实际拍摄帧率：">实际拍摄帧率：</label>
+    <input type="number" id="fpsReal" placeholder="选填，如 60" step="any" min="0">
+    <span style="font-size:11px;color:#94a3b8;">慢动作视频专用：若视频由高帧率拍摄后按普通帧率导出（拟合加速度明显高于 g），填拍摄帧率即可修正时间基</span>
+  </div>
+  <div class="analysis-inputs">
+    <label data-i18n="线段真实长度：">线段真实长度：</label>
+    <input type="number" id="objSizeInput" placeholder="例如 5" step="any" min="0">
+    <select id="objSizeUnit"><option value="1">m（米）</option><option value="0.01" selected>cm（厘米）</option><option value="0.001">mm（毫米）</option></select>
+    <button class="btn btn-primary" id="analyzeBtn" data-i18n="🤖 计算速度/加速度">🤖 计算速度/加速度</button>
+  </div>
+  <div style="font-size:11px;color:#94a3b8;margin:2px 0 6px;line-height:1.6;">
+    ⚠️ 两模式的含义不同：<b style="color:#38bdf8">自动检测模式</b>——此项＝<b style="color:#38bdf8">小球真实直径</b>（如 5.4 cm），<b style="color:#f59e0b">画的测量线不参与计算</b>；
+    <b style="color:#38bdf8">手动标记模式</b>——此项＝<b style="color:#38bdf8">你画的那条测量线的真实长度</b>（如直尺 0→100 cm 填 100）。
+  </div>
+    <div style="font-size:11px;color:#94a3b8;margin:4px 0 6px;line-height:1.6;">📐 <b style="color:#38bdf8">自动模式两种标定（二选一）</b>：① <b>画了📏测量线</b>（推荐，如直尺 0→100 cm 画一条线）→「线段真实长度」填<b style="color:#fcd34d;">测量线的真实长度</b>（尺 1 m 填 100 cm）——这是最可靠的方式，直尺是真实 1 m，不受小球绒毛/运动模糊/离墙远近影响；② <b>没画测量线</b> →「线段真实长度」填<b style="color:#fcd34d;">小球真实直径</b>（如网球 6.7 cm）。<b style="color:#f59e0b;">注意：若球比尺子更靠近相机，用球径标定会偏小；用尺子标定更稳。</b></div>
+    <div class="analysis-info" id="analysisInfo"></div>
+  <div class="analysis-table-wrap" id="analysisTableWrap"></div>
+  <div class="formula-box" id="formulaBox"></div>
+  <div class="ai-summary" id="aiSummary"></div>
 </div>
 <div class="result-actions" data-page-node-id="PqqFjLmZfCwg9xc1KEESHv">
 <button class="btn btn-success save-preview-btn" id="savePreviewBtn" data-i18n="📥 保存当前预览" data-page-node-id="aCPxFL3aPESl7oi2ZpkLrv">📥 保存当前预览</button>
@@ -663,6 +752,31 @@ const extractBtn=$('extractBtn'),progressBar=$('progressBar'),framesSelectArea=$
 const framesGrid=$('framesGrid'),framesEditArea=$('framesEditArea'),framesTabs=$('framesTabs');
 const editCanvas=$('editCanvas'),editCtx=editCanvas.getContext('2d');
 const resultArea=$('resultArea'),previewCanvas=$('previewCanvas');
+const annoCanvas=$('annoCanvas'),annoCtx=annoCanvas.getContext('2d');
+const toolCanvas=$('toolCanvas'),toolCtx=toolCanvas.getContext('2d');
+// 描轮廓专用离屏画布：只含当前笔画的墨迹（不含旧标记虚线框），保证外接框读取不受污染
+const strokeBuf=document.createElement('canvas');
+const strokeBufCtx=strokeBuf.getContext('2d');
+function syncStrokeBufSize(){
+    if(strokeBuf.width!==toolCanvas.width||strokeBuf.height!==toolCanvas.height){strokeBuf.width=toolCanvas.width;strokeBuf.height=toolCanvas.height;}
+}
+function clearStrokeBuf(){syncStrokeBufSize();strokeBufCtx.clearRect(0,0,strokeBuf.width,strokeBuf.height);}
+
+// 运动分析状态
+let analysisActive=false,lastRealSize=0,instCache=null,instCacheKey='';
+// 手动标记状态（涂抹定位 + 拖线测量）
+let toolMode=null,toolDrawing=false,toolLast=null,measureDrag=null;
+let manualMarks=[],measureLine=null,manualBrush=20;
+// 开始新一轮合成/上传时，清空上一轮的手动标记、测量线与标注，防止旧数据残留到新图上
+function resetAnalysisMarks(){
+    manualMarks=[];measureLine=null;measureDrag=null;toolMode=null;toolDrawing=false;toolLast=null;
+    analysisActive=false;lastRealSize=0;instCache=null;
+    if(toolCtx)toolCtx.clearRect(0,0,toolCanvas.width,toolCanvas.height);
+    if(annoCtx)annoCtx.clearRect(0,0,annoCanvas.width,annoCanvas.height);
+    if(typeof clearStrokeBuf==='function')clearStrokeBuf();
+    const ms=$('manualStatus');if(ms)ms.textContent='';
+    const card=$('analysisCard');if(card)card.style.display='none';
+}
 
 // ============ 视频上传 ============
 // 动态创建 input，避免复用同一元素导致 Windows 文件框第二次卡死（Shell 扩展进程残留）
@@ -686,6 +800,7 @@ document.addEventListener('paste',e=>{
 });
 
 function handleFile(file){
+    resetAnalysisMarks(); // 新视频 = 新一轮：清掉上一轮的标记与标注
     selectedFile=file;videoLoaded=false;hideError();
     const ext=file.name.split('.').pop().toLowerCase();
     if(['avi','mkv','flv','wmv','rmvb','rm'].includes(ext)){
@@ -927,51 +1042,205 @@ $('startTimeInput').onchange=e=>{let v=parseFloat(e.target.value)||0;startTime=M
 $('endTimeInput').onchange=e=>{let v=parseFloat(e.target.value)||videoDuration;endTime=Math.max(startTime+0.1,Math.min(v,videoDuration));video.currentTime=endTime;updateTimeInputs();updateTimelineUI();updateVideoTimeDisplay()};
 videoProgress.onclick=e=>{video.currentTime=((e.clientX-videoProgress.getBoundingClientRect().left)/videoProgress.offsetWidth)*videoDuration};
 
+// ============ 帧提取补丁（index16：精确 seek）============
+// 修复原版在 seeked 后立刻 drawImage 会画到「尚未呈现的旧帧」的问题：
+// 连续快速 seek 时浏览器合成器滞后 0~2 帧，导致频闪间距 / 时间轴被扭曲。
+// 改为用 requestVideoFrameCallback 确认「实际呈现帧」的 mediaTime 后再 drawImage，
+// 偏差超标时多等几帧收敛到目标帧；不支持 rVFC 的浏览器（如 Firefox）自动降级。
+function seekToFrame(video, time, fps){
+    const tol = Math.max(0.04, 1.5/(fps||30));
+    return new Promise((resolve)=>{
+        let finished=false, best={mt:(video.currentTime||0), diff:Infinity}, triesLeft=3;
+        const cleanup=()=>{ try{video.onseeked=null;}catch(e){} };
+        const finish=(mt,accurate)=>{ if(!finished){finished=true; clearTimeout(timeout); cleanup(); resolve({mediaTime:mt, accurate});} };
+        const timeout=setTimeout(()=>finish(best.mt,false), 2500);
+        const waitRVFC=()=>{
+            if(!video.requestVideoFrameCallback){
+                setTimeout(()=>finish((video.currentTime||0),false), 120); return;
+            }
+            const cb=(now,meta)=>{
+                const mt=(meta&&typeof meta.mediaTime==='number')?meta.mediaTime:(video.currentTime||0);
+                const diff=Math.abs(mt-time);
+                if(diff<best.diff) best={mt, diff};
+                if(diff<=tol || triesLeft<=0) finish(mt, diff<=tol);
+                else { triesLeft--; try{video.requestVideoFrameCallback(cb);}catch(e){finish(mt,false);} }
+            };
+            try{video.requestVideoFrameCallback(cb);}catch(e){finish((video.currentTime||0),false);}
+        };
+        const cur=(video.currentTime||0);
+        if(Math.abs(cur-time) < 1e-4){
+            // 目标即当前帧：无需 seek，直接等当前呈现帧
+            waitRVFC();
+        }else{
+            video.onseeked=()=>{ waitRVFC(); };
+            try{ video.currentTime=time; }
+            catch(e){ finish((video.currentTime||0),false); }
+        }
+    });
+}
+
+// index16 补丁④：播放采样法——彻底放弃「连续 seek」。
+// 依据实测：即使有 rVFC 校验，Edge 的 seek+drawImage 仍会出现渲染滞后 / mediaTime 漂移
+//（同一窗口重复提取，标记轨迹被系统性压缩、时间轴出现 0.026s 这种 30fps 不可能的间隔）。
+// 播放时 rVFC 对每个「实际呈现的视频帧」恰好触发一次，mediaTime 即原生 PTS，不存在竞态。
+function captureByPlayback(video,t0,t1,canvas,ctx){
+    return new Promise((resolve,reject)=>{
+        if(!video.requestVideoFrameCallback)return reject(new Error('rVFC 不可用'));
+        const frames=[];let finished=false;
+        const wasMuted=video.muted;
+        const safety=setTimeout(()=>done(true),(t1-t0)*1000+10000);
+        function done(ok){
+            if(finished)return;finished=true;
+            clearTimeout(safety);
+            try{video.pause();}catch(e){}
+            try{video.muted=wasMuted;}catch(e){}
+            video.onseeked=null;
+            ok?resolve(frames):reject(new Error('播放采样中断'));
+        }
+        function grab(mt){
+            ctx.drawImage(video,0,0,canvas.width,canvas.height);
+            frames.push({mediaTime:mt,imageData:ctx.getImageData(0,0,canvas.width,canvas.height),thumb:canvas.toDataURL('image/jpeg',0.7)});
+        }
+        function step(now,meta){
+            if(finished)return;
+            const mt=(meta&&typeof meta.mediaTime==='number')?meta.mediaTime:video.currentTime;
+            if(mt>=t0-1e-3&&mt<=t1+0.25)grab(mt);
+            $('progressText').textContent='播放采样中… 已捕获 '+frames.length+' 帧';
+            $('extractProgressFill').style.width=Math.min(100,Math.max(0,(mt-t0)/Math.max(1e-3,t1-t0)*100))+'%';
+            if(mt>=t1-1e-3||frames.length>=900)return done(true);
+            try{video.requestVideoFrameCallback(step);}catch(e){done(true);}
+        }
+        video.onended=()=>done(true);
+        video.muted=true;
+        video.currentTime=Math.max(0,t0-0.12); // 单次定位（略提前 0.12s，确保窗口首帧也被捕获）
+        video.onseeked=()=>{ video.onseeked=null;
+            video.playbackRate=1;
+            video.play().then(()=>{try{video.requestVideoFrameCallback(step);}catch(e){done(true);}})
+                         .catch(()=>done(true));
+        };
+    });
+}
+
 // ============ 帧提取（两种模式共用）============
 extractBtn.onclick=async()=>{
     if(!selectedFile||!videoLoaded){showError(t('请先上传视频'));return}
     extractBtn.disabled=true;progressBar.style.display='block';$('extractProgressFill').style.width='0%';$('progressText').textContent='提取帧中...';hideError();
     try{
-        const frameCount=parseInt($('frameCount').value)||8,dur=endTime-startTime;
+        const frameCountReq=parseInt($('frameCount').value)||8,dur=endTime-startTime;
+        // index16 补丁②：防重复帧——请求步长不得小于原生帧间隔（按≤30fps 估，取 1/29 留余量），
+        // 否则两次请求会落在同一个视频帧上：速度变 0、时间轴重复甚至倒退（表格里出现两次相同时刻就是这个问题）
+        let frameCount=frameCountReq;
+        const MIN_STEP=1/29;
+        if(frameCountReq>1 && dur/(frameCountReq-1)<MIN_STEP){
+            frameCount=Math.max(2,Math.floor(dur/MIN_STEP)+1);
+            console.warn('[防重复帧] 窗口 '+dur.toFixed(3)+'s 内抽 '+frameCountReq+' 帧步长小于帧间隔，已自动降为 '+frameCount+' 帧（原生帧足够时建议直接勾选全部原生帧）');
+        }
         const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
         canvas.width=video.videoWidth||640;canvas.height=video.videoHeight||480;
 
         // 初始化两种模式的数据
         extractedAutoFrames=[];extractedBrushFrames=[];bgFrameIndex=0;autoBgFrameIndex=-1;autoBgData=null;
 
-        for(let i=0;i<frameCount;i++){
-            // 等间隔采样：N 帧 = N-1 个间隔
-            // 第0帧=startTime，第N-1帧=endTime
-            const time = frameCount <= 1 ? (startTime + endTime) / 2 : startTime + (dur * i) / (frameCount - 1);
-            $('progressText').textContent=t('提取帧 {i}/{n} ({t}s)',{i:i+1,n:frameCount,t:time.toFixed(2)});
-            $('extractProgressFill').style.width=((i+1)/frameCount*100)+'%';
-            await new Promise(res=>{
-                const to=setTimeout(()=>{console.warn('帧'+(i+1)+'超时');res()},3000);
-                video.onseeked=()=>{
-                    clearTimeout(to);
-                    // 记录实际跳转时间（可能因关键帧吸附而有偏差）
-                    const actualTime = video.currentTime;
-                    if(Math.abs(actualTime - time) > 0.05){
-                        console.warn('[帧'+(i+1)+'] 时间偏差: 请求='+time.toFixed(3)+'s 实际='+actualTime.toFixed(3)+'s');
-                    }
-                    ctx.drawImage(video,0,0,canvas.width,canvas.height);
-                    const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
-                    const thumb=canvas.toDataURL('image/jpeg',0.7);
-                    const mask=new Uint8Array(canvas.width*canvas.height);
-                    // 自动模式数据
-                    extractedAutoFrames.push({data:imageData,time,selected:true,_thumb:thumb});
-                    // 涂抹模式数据
-                    extractedBrushFrames.push({imageData,data:imageData,mask,isBg:i===0,width:canvas.width,height:canvas.height,maskPositiveCount:0,hasMask:false});
-                    res();
-                };
-                video.onerror=()=>{clearTimeout(to);res()};
-                video.currentTime=time;
+        // index16 补丁④：优先「播放采样」（原生 PTS、无竞态），失败或帧数不足时回退 seek 采样
+        let caps=[];
+        try{ caps=await captureByPlayback(video,startTime,endTime,canvas,ctx); }
+        catch(e){ console.warn('[播放采样] 不可用，回退 seek 采样:',e&&e.message); }
+        caps.sort((a,b)=>a.mediaTime-b.mediaTime);
+        const dedup=[];for(const c of caps){if(!dedup.length||c.mediaTime-dedup[dedup.length-1].mediaTime>1e-4)dedup.push(c);}
+        let chosen=dedup;
+        // index16 补丁⑦：默认「用满窗口内全部原生帧」。只要抽取帧数小于原生帧数，
+        // 频闪合成图就必然出现跳空（表现为两个球之间少一个球）——这是数学上不可避免的，
+        // 只有把帧数取满才能让球距严格均匀。勾选框让这一步自动完成，免去手算。
+        const useAllNative=!!($('useAllNative')&&$('useAllNative').checked);
+        if(useAllNative){
+            if(dedup.length>=2){
+                frameCount=dedup.length;
+                try{$('frameCount').value=String(dedup.length);}catch(e){}
+                console.log('[原生帧] 窗口内原生帧 '+dedup.length+' 个，已全部选用（球距严格均匀、不缺球）；帧数输入框已同步为 '+dedup.length);
+            }else{
+                frameCount=frameCountReq; // 播放采样失败，回退为用户请求值走 seek 分支
+            }
+        }
+        if(dedup.length>frameCount){
+            // index16 补丁⑤：改为「按原生帧索引等间隔取帧」，不再按请求时刻贪心取最近帧。
+            // 原因：请求网格步长(0.46/(N-1))与原生帧间隔(1/30)不同步时，贪心取最近会让某一帧永远
+            // 选不上、下一处又出现 2 帧的跳空 —— 频闪合成图上表现为「两个球之间少了一个球」。
+            // 实测 1458766882.mp4：窗口 9.95~10.41s 内原生 14 帧，N=13 时贪心法漏掉 10.200s 那一帧
+            // （该处球间距 166.9px，约为相邻正常间距 90px 的两倍，肉眼就是"少一个球"）。
+            // 按索引取整后首尾必取、间隔均匀，且时刻仍用原生 mediaTime，拟合不受影响。
+            const m=dedup.length;
+            const idxs=[];
+            for(let i=0;i<frameCount;i++) idxs.push(Math.round(i*(m-1)/(frameCount-1)));
+            chosen=[...new Set(idxs)].sort((a,b)=>a-b).map(i=>dedup[i]);
+        }
+        if(chosen.length>=2){
+            chosen.forEach((c,i)=>{
+                $('progressText').textContent='提取帧 '+(i+1)+'/'+chosen.length+' ('+c.mediaTime.toFixed(2)+'s)';
+                $('extractProgressFill').style.width=((i+1)/chosen.length*100)+'%';
+                const mask=new Uint8Array(canvas.width*canvas.height);
+                extractedAutoFrames.push({data:c.imageData,time:c.mediaTime,reqTime:c.mediaTime,selected:true,_thumb:c.thumb});
+                extractedBrushFrames.push({imageData:c.imageData,data:c.imageData,mask,isBg:i===0,width:canvas.width,height:canvas.height,maskPositiveCount:0,hasMask:false,time:c.mediaTime,reqTime:c.mediaTime});
             });
-            await new Promise(r=>setTimeout(r,50));
+            console.log('[播放采样] 窗口内原生帧 '+dedup.length+' 个，选用 '+chosen.length+' 个；时间轴为原生 PTS');
+        }else{
+            console.warn('[播放采样] 仅得 '+chosen.length+' 帧，回退为 seek 采样');
+            for(let i=0;i<frameCount;i++){
+                // 等间隔采样：N 帧 = N-1 个间隔
+                // 第0帧=startTime，第N-1帧=endTime
+                const time = frameCount <= 1 ? (startTime + endTime) / 2 : startTime + (dur * i) / (frameCount - 1);
+                $('progressText').textContent='提取帧 '+(i+1)+'/'+frameCount+' ('+time.toFixed(2)+'s)';
+                $('extractProgressFill').style.width=((i+1)/frameCount*100)+'%';
+                const seekRes = await seekToFrame(video, time, 30);
+                const ftime = seekRes.mediaTime;
+                if(!seekRes.accurate){
+                    console.warn('[帧'+(i+1)+'] 精确 seek 未达容差: 请求='+time.toFixed(3)+'s 实际='+ftime.toFixed(3)+'s（已用最接近帧）');
+                }
+                ctx.drawImage(video,0,0,canvas.width,canvas.height);
+                const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+                const thumb=canvas.toDataURL('image/jpeg',0.7);
+                const mask=new Uint8Array(canvas.width*canvas.height);
+                // 自动模式数据（time 用实际呈现帧时间，运动学更准确；reqTime 保留请求网格时间作后备）
+                extractedAutoFrames.push({data:imageData,time:ftime,reqTime:time,selected:true,_thumb:thumb});
+                // 涂抹模式数据
+                extractedBrushFrames.push({imageData,data:imageData,mask,isBg:i===0,width:canvas.width,height:canvas.height,maskPositiveCount:0,hasMask:false,time:ftime,reqTime:time});
+                await new Promise(r=>setTimeout(r,20));
+            }
         }
 
+        // index16 补丁③：时间轴防御。rVFC 偶发返回重复/近重复的 mediaTime（间隔远小于帧间隔），
+        // 会让逐点差分出现非物理值（加速度达 ±上千）、拟合被严重拖低。
+        // 校验：排序后任一相邻间隔 < 中位间隔的一半（或非正）即判为坏时间轴，
+        // 整体回退为「请求网格时间」（构造上严格递增、等间隔），并在界面给出提示。
+        window.__timeAxisFixed=false;
+        (function sanitizeTimeAxis(){
+            const fr=extractedBrushFrames,n=fr.length;
+            if(n<3)return;
+            const idx=[...fr.keys()].sort((a,b)=>fr[a].time-fr[b].time);
+            const ts=idx.map(i=>fr[i].time);
+            let bad=false;
+            for(let i=1;i<n;i++){if(ts[i]-ts[i-1]<=0){bad=true;break;}}
+            if(!bad){
+                const gaps=[];
+                for(let i=1;i<n;i++){const g=ts[i]-ts[i-1];if(g>1e-6)gaps.push(g);}
+                if(gaps.length){
+                    const sorted=[...gaps].sort((a,b)=>a-b);
+                    const med=sorted[Math.floor(sorted.length/2)];
+                    // 收紧(index16④)：30fps 恒定帧率下任何相邻间隔都不应明显小于中位间隔
+                    //（实测 0.026s vs 中位 0.0357s 的坏轴曾漏网，故阈值由 0.5 收紧至 0.8）
+                    for(let i=1;i<n;i++){if(ts[i]-ts[i-1]<med*0.8){bad=true;break;}}
+                }
+            }
+            if(!bad)return;
+            // 回退为请求网格时间（需严格递增才可用）
+            const byReq=[...fr.keys()].sort((a,b)=>fr[a].reqTime-fr[b].reqTime);
+            for(let i=1;i<n;i++)if(fr[byReq[i]].reqTime-fr[byReq[i-1]].reqTime<=0)return;
+            byReq.forEach((fi,k)=>{fr[fi].time=fr[fi].reqTime;extractedAutoFrames[fi].time=fr[fi].reqTime;});
+            window.__timeAxisFixed=true;
+            console.warn('[时间轴修复] 检测到抽帧时间重复/近重复（正常应≥帧间隔0.033s），已整体回退为请求网格时间。表格时间列如仍异常请重新提取帧。');
+        })();
+
         if(extractedAutoFrames.length===0)throw new Error('没有成功提取任何帧');
-        $('progressText').textContent=t('✅ 提取完成！共{n}帧',{n:extractedAutoFrames.length});
+        $('progressText').textContent='✅ 提取完成！共'+extractedAutoFrames.length+'帧';
 
         // 提取完成后显示模式选择
         $('modeSelector').style.display='block';
@@ -1168,6 +1437,7 @@ $('composeAutoBtn').onclick=async()=>{
     status.textContent=t('⏳ 正在计算，请稍候（帧数越多越慢）...');
     await new Promise(r=>setTimeout(r,50));
     try{
+        resetAnalysisMarks(); // 重新合成 = 新一轮：清掉上一轮的标记与标注
         autoBgData=computeAutoBackground(sel.map(f=>f.data));
         const result=composeAuto(sel.map(f=>f.data),th);
         const pc=previewCanvas;pctx=pc.getContext('2d');
@@ -1177,6 +1447,7 @@ $('composeAutoBtn').onclick=async()=>{
         if(!appState.isPro) drawWatermark(pctx,pc.width,pc.height);
         initAutoPreview(sel.length,th);
         showResult();
+        if(analysisActive)redrawAnalysis();
         status.textContent=t('✅ 合成完成！');
     }catch(err){showError(t('合成失败:{msg}',{msg:err.message}));status.textContent=''}
     finally{btn.disabled=false;btn.textContent=origText}
@@ -1411,6 +1682,7 @@ $('composeBrushBtn').onclick=async()=>{
     btn.disabled=true;btn.textContent=t('⏳ 合成中...');
     await new Promise(r=>setTimeout(r,50));
     try{
+        resetAnalysisMarks(); // 重新合成 = 新一轮：清掉上一轮的标记与标注
         const bgFrame=extractedBrushFrames[bgFrameIndex];
         if(!bgFrame){
             alert(t('❌ 未找到背景帧\n\nbgFrameIndex={i}\n请检查提取帧是否成功',{i:bgFrameIndex}));
@@ -1446,6 +1718,7 @@ $('composeBrushBtn').onclick=async()=>{
         initBrushIndicator();
         updateBrushPreview(maskedFramesOrdered.length);
         showResult();
+        if(analysisActive)redrawAnalysis();
         console.log('[DEBUG] brush compose complete, masked frames:',maskedFramesOrdered.length);
     }catch(err){
         console.error('[ERROR] brush compose failed:',err);
@@ -1516,6 +1789,7 @@ function updatePreview(){
     }else{
         updateBrushPreview(parseInt($('frameSlider').value));
     }
+    redrawAnalysis();
 }
 
 // 帧滑块控制（支持鼠标和触摸）
@@ -1542,6 +1816,7 @@ function showResult(){
     resultArea.style.display='block';
     $('saveProjectBtn').style.display='inline-flex';
     $('saveProjectBtn2').style.display='inline-flex';
+    $('analysisCard').style.display='block';
     resultArea.scrollIntoView({behavior:'smooth'});
     updateProjectInfo();
 }
@@ -1772,6 +2047,7 @@ $('importProjectBtn').onclick=()=>$('importProjectInput').click();
 
 async function loadProjectFile(file){
     try{
+        resetAnalysisMarks(); // 载入项目 = 新一轮：清掉上一轮的标记与标注
         status.textContent=t('加载项目中...');hideError();
         const text=await file.text();
 
@@ -1910,6 +2186,11 @@ $('resetBtn').onclick=()=>{
     selectedFile=null;extractedAutoFrames=[];extractedBrushFrames=[];selectedBrushFrames=[];
     maskedFramesOrdered=[];projectLoaded=false;currentProjectName='';autoBgFrameIndex=-1;autoBgData=null;
     $('saveProjectBtn').style.display='none';$('saveProjectBtn2').style.display='none';
+    $('analysisCard').style.display='none';analysisActive=false;lastRealSize=0;instCache=null;
+    manualMarks=[];measureLine=null;toolMode=null;measureDrag=null;
+    toolCanvas.style.pointerEvents='none';toolCtx.clearRect(0,0,toolCanvas.width,toolCanvas.height);
+    $('manualStatus').textContent='';$('paintObjBtn').style.outline='';$('measureBtn').style.outline='';
+    annoCtx.clearRect(0,0,annoCanvas.width,annoCanvas.height);
     $('projectLoadedInfo').textContent='';status.textContent='';hideError();
     // 重置时不需要重新绑定 onchange（已在 DOMContentLoaded 中绑定）
 };
@@ -1917,6 +2198,606 @@ $('resetBtn').onclick=()=>{
 // ============ 工具 ============
 function showError(m){$('errorMsg').innerHTML=m;$('errorMsg').style.display='block'}
 function hideError(){$('errorMsg').style.display='none'}
+
+// ============ 运动分析：时间间隔 + 速度/加速度（AI 计算引擎）============
+// 思路：利用合成时已得到的每帧物体位置（涂抹模式用 mask 质心；自动模式用与背景的差值质心），
+// 以用户输入的"物体真实尺寸"为比例尺，把像素位移换算为物理量，进而求速度/加速度。
+
+// 质心 + 包围盒（涂抹模式：mask）
+function centroidFromMask(mask,w,h){
+    let sx=0,sy=0,c=0,minX=w,maxX=-1,minY=h,maxY=-1;
+    for(let y=0;y<h;y++){const row=y*w;for(let x=0;x<w;x++){if(mask[row+x]>0){sx+=x;sy+=y;c++;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;}}}
+    if(c===0)return null;
+    return {cx:sx/c,cy:sy/c,w:maxX-minX+1,h:maxY-minY+1};
+}
+// 自动模式色调门限（由 deriveAutoObjHSV 计算），用于排除同画面中其他运动物体（如释放球的手/手臂）的干扰。
+// 背景/手/尺与小球在差分图里常连成一片（球≈3000px，球+手可达13000px），连通域分不开，只能按色调分离。
+var autoObjHSV=null, autoObjGate={dh:18, sMin:0.22, vMin:0.25};
+
+function _rgb2hsv(r,g,b){
+    r/=255;g/=255;b/=255;
+    const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;
+    let h=0;
+    if(d!==0){
+        if(mx===r)h=60*(((g-b)/d)%6);
+        else if(mx===g)h=60*((b-r)/d+2);
+        else h=60*((r-g)/d+4);
+    }
+    if(h<0)h+=360;
+    return [h,mx===0?0:d/mx,mx];
+}
+function _hueDist(a,b){let d=Math.abs(a-b);if(d>180)d=360-d;return d;}
+
+// 在 mask（0/1，长度 w*h）中找最大连通域，返回质心与包围盒
+function _largestCC(mask,w,h){
+    const seen=new Uint8Array(w*h);
+    let best=null,bestArea=0;
+    for(let y=0;y<h;y++){const row=y*w;
+        for(let x=0;x<w;x++){
+            const idx=row+x;
+            if(!mask[idx]||seen[idx])continue;
+            let sx=0,sy=0,c=0,minX=w,maxX=-1,minY=h,maxY=-1;
+            const stack=[idx];seen[idx]=1;
+            while(stack.length){
+                const cur=stack.pop();const cy=Math.floor(cur/w),cx=cur%w;
+                sx+=cx;sy+=cy;c++;
+                if(cx<minX)minX=cx;if(cx>maxX)maxX=cx;if(cy<minY)minY=cy;if(cy>maxY)maxY=cy;
+                if(cx>0){const n=cur-1;if(mask[n]&&!seen[n]){seen[n]=1;stack.push(n);}}
+                if(cx<w-1){const n=cur+1;if(mask[n]&&!seen[n]){seen[n]=1;stack.push(n);}}
+                if(cy>0){const n=cur-w;if(mask[n]&&!seen[n]){seen[n]=1;stack.push(n);}}
+                if(cy<h-1){const n=cur+w;if(mask[n]&&!seen[n]){seen[n]=1;stack.push(n);}}
+            }
+            if(c>=20&&c>bestArea){bestArea=c;best={cx:sx/c,cy:sy/c,w:maxX-minX+1,h:maxY-minY+1,area:c};}
+        }
+    }
+    return best;
+}
+
+// 从所选帧自动推断“目标物体”的色调：取最后一帧（此时球通常已远离手）最大差分块质心附近的平均色
+function deriveAutoObjHSV(frames,bg,th){
+    const f=frames[frames.length-1];
+    if(!f)return null;
+    const fd=f.data,w=fd.width,h=fd.height,data=fd.data,bgData=bg.data;
+    const mask=new Uint8Array(w*h);let cnt=0;
+    for(let y=0;y<h;y++){const row=y*w;
+        for(let x=0;x<w;x++){const i=(row+x)*4;
+            const d=(Math.abs(data[i]-bgData[i])+Math.abs(data[i+1]-bgData[i+1])+Math.abs(data[i+2]-bgData[i+2]))/3;
+            if(d>th){mask[row+x]=1;cnt++;}}}
+    if(cnt<30)return null;
+    const comp=_largestCC(mask,w,h);
+    if(!comp)return null;
+    let r=0,g=0,b=0,n=0;
+    const rad=Math.max(20,Math.min(comp.w,comp.h)/2);
+    const y0=Math.max(0,Math.floor(comp.cy-rad)),y1=Math.min(h-1,Math.ceil(comp.cy+rad));
+    const x0=Math.max(0,Math.floor(comp.cx-rad)),x1=Math.min(w-1,Math.ceil(comp.cx+rad));
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+        if(!mask[y*w+x])continue;
+        const i=(y*w+x)*4;r+=data[i];g+=data[i+1];b+=data[i+2];n++;}
+    if(n<20)return null;
+    const hsv=_rgb2hsv(r/n,g/n,b/n);
+    if(hsv[1]<0.15)return null; // 灰度物体无可用色调，放弃门限
+    return hsv;
+}
+
+// 质心 + 包围盒（自动模式：与背景的差值像素，叠加可选颜色门限，取最大连通域）
+function centroidFromDiff(fd,bg,th){
+    const w=fd.width,h=fd.height,data=fd.data,bgData=bg.data;
+    const diffMask=new Uint8Array(w*h);
+    let diffCount=0;
+    for(let y=0;y<h;y++){const row=y*w;
+        for(let x=0;x<w;x++){const i=(row+x)*4;
+            const d=(Math.abs(data[i]-bgData[i])+Math.abs(data[i+1]-bgData[i+1])+Math.abs(data[i+2]-bgData[i+2]))/3;
+            if(d>th){diffMask[row+x]=1;diffCount++;}}}
+    if(diffCount<30)return null;
+    let mask=diffMask;
+    if(autoObjHSV){
+        const oh=autoObjHSV[0],dh=autoObjGate.dh,sMin=autoObjGate.sMin,vMin=autoObjGate.vMin;
+        const cm=new Uint8Array(w*h);let cc=0;
+        for(let y=0;y<h;y++){const row=y*w;
+            for(let x=0;x<w;x++){const idx=row+x;if(!diffMask[idx])continue;
+                const i=(row+x)*4;
+                const hsv=_rgb2hsv(data[i],data[i+1],data[i+2]);
+                if(hsv[1]>=sMin&&hsv[2]>=vMin&&_hueDist(hsv[0],oh)<dh){cm[idx]=1;cc++;}}}
+        if(cc>=30)mask=cm; // 门限后像素太少则退回纯差分
+    }
+    const cc2=_largestCC(mask,w,h);
+    return cc2?{cx:cc2.cx,cy:cc2.cy,w:cc2.w,h:cc2.h}:null;
+}
+
+// 计算当前模式全部帧的物体实例（带缓存，滑块拖动时不重算）
+function computeAllInstances(){
+    const th=parseInt($('previewThreshold').value)||20;
+    const key=currentMode+'|'+(currentMode==='auto'?selectedBrushFrames.length:maskedFramesOrdered.length)+'|'+th+'|'+autoBgFrameIndex;
+    if(instCache&&instCache.key===key)return instCache.data;
+    const list=[];
+    if(currentMode==='auto'){
+        const bgData=(autoBgData&&autoBgData.width===previewCanvas.width)?autoBgData:selectedBrushFrames[Math.floor(selectedBrushFrames.length/2)].data;
+        autoObjHSV=deriveAutoObjHSV(selectedBrushFrames,bgData,th); // 自动取目标色调，排除手/手臂等干扰
+        selectedBrushFrames.forEach(f=>{const inst=centroidFromDiff(f.data,bgData,th);if(inst)list.push({...inst,t:f.time});});
+    }else{
+        maskedFramesOrdered.forEach(item=>{const inst=centroidFromMask(item.frame.mask,item.frame.width,item.frame.height);if(inst)list.push({...inst,t:item.frame.time});});
+    }
+    instCache={key,data:list};
+    return list;
+}
+
+// 手动标记模式下参与分析的帧（按时间升序），轮廓标记按描画顺序与帧一一对应
+function manualFrameList(){
+    const list=currentMode==='auto'
+        ?selectedBrushFrames.map(f=>({time:f.time}))
+        :maskedFramesOrdered.map(it=>({time:it.frame.time}));
+    list.sort((a,b)=>a.time-b.time);
+    return list;
+}
+
+// ===== 匀加速最小二乘抛物线拟合：y = c + b·t + (a/2)·t²  →  返回加速度 a 与拟合优度 R² =====
+// 对手动标记的像素级噪声极不敏感（逐点差分会把 ±1px 误差放大上千倍，拟合并不会）
+function quadFitStats(ts,ys){
+    const n=ts.length;if(n<4)return null;
+    let S0=0,S1=0,S2=0,S3=0,S4=0,T0=0,T1=0,T2=0;
+    for(let i=0;i<n;i++){const x=ts[i],y=ys[i];S0++;S1+=x;S2+=x*x;S3+=x*x*x;S4+=x*x*x*x;T0+=y;T1+=x*y;T2+=x*x*y;}
+    const M=[[S0,S1,S2,T0],[S1,S2,S3,T1],[S2,S3,S4,T2]];
+    for(let i=0;i<3;i++){
+        let p=i;for(let j=i+1;j<3;j++)if(Math.abs(M[j][i])>Math.abs(M[p][i]))p=j;
+        const tmp=M[i];M[i]=M[p];M[p]=tmp;
+        if(Math.abs(M[i][i])<1e-12)return null;
+        for(let j=0;j<3;j++){if(j===i)continue;const f=M[j][i]/M[i][i];for(let k=i;k<4;k++)M[j][k]-=f*M[i][k];}
+    }
+    const c=M[0][3]/M[0][0],b=M[1][3]/M[1][1],a2=M[2][3]/M[2][2];
+    const ym=T0/n;let sse=0,sst=0;
+    for(let i=0;i<n;i++){const fv=c+b*ts[i]+a2*ts[i]*ts[i];sse+=(ys[i]-fv)*(ys[i]-fv);sst+=(ys[i]-ym)*(ys[i]-ym);}
+    return{a:2*a2,v0:b,c:c,r2:sst>0?1-sse/sst:0};
+}
+function quadSSE(ts,ys){
+    const f=quadFitStats(ts,ys);if(!f)return Infinity;
+    let sse=0;for(let i=0;i<ts.length;i++){const fv=f.c+f.v0*ts[i]+f.a/2*ts[i]*ts[i];sse+=(ys[i]-fv)*(ys[i]-fv);}
+    return sse;
+}
+
+// 标记数少于帧数时，推断各标记对应的帧时间（缺失可能因物体进出画面）
+function assignMarkTimes(frames){
+    const n=manualMarks.length,m=frames.length,missing=m-n;
+    const pos=$('missingPos')?$('missingPos').value:'end';
+    if(pos==='start')return manualMarks.map((mk,i)=>frames[i+missing].time);
+    if(pos==='auto'){
+        // 两步：① 间距比例给初值 → ② 爬山法微调各标记的帧序号，使「匀加速抛物线拟合残差」最小
+        // 原理：真实运动满足 y(t) 为抛物线，只有帧分配正确时拟合残差才最小——比单纯比较间距比例可靠得多
+        const d=[];for(let i=1;i<n;i++)d.push(Math.hypot(manualMarks[i].cx-manualMarks[i-1].cx,manualMarks[i].cy-manualMarks[i-1].cy));
+        const s=[...d].sort((a,b)=>a-b);const med=s[Math.floor(s.length/2)]||1;
+        const skip=d.map(v=>Math.max(0,Math.round(v/med)-1));
+        let diff=missing-skip.reduce((a,b)=>a+b,0);
+        const order=d.map((v,i)=>i);
+        if(diff>0){order.sort((a,b)=>d[b]-d[a]);for(let k=0;diff>0&&k<order.length;k++){skip[order[k]]++;diff--;}}
+        else if(diff<0){order.sort((a,b)=>skip[b]-skip[a]);for(let k=0;diff<0&&k<order.length;k++){while(diff<0&&skip[order[k]]>0){skip[order[k]]--;diff++;}}}
+        const idx=[0];let acc=0;
+        for(let i=0;i<n-1;i++){acc+=skip[i];idx.push(Math.min(m-1,i+1+acc));}
+        for(let i=1;i<n;i++)if(idx[i]<=idx[i-1])idx[i]=Math.min(m-1,idx[i-1]+1);
+        // ② 坐标下降精修：按步长 16→8→4→2→1 逐个尝试移动各标记的帧序号，
+        //    保留「匀加速抛物线拟合残差」更小的分配（保证序号严格递增）。
+        //    原理：只有帧分配正确时 y(t) 才最接近抛物线；整体平移不影响加速度，因此结果稳健。
+        if(n>=4&&m>n){
+            const ys=manualMarks.map(mk=>mk.cy);
+            const score=ix=>quadSSE(ix.map(i=>frames[i].time),ys);
+            let cur=idx.slice(),best=score(cur);
+            for(const step of[16,8,4,2,1]){
+                if(step>=m-n+1)continue;
+                let moved=true,guard=0;
+                for(;moved&&guard++<100;){
+                    moved=false;
+                    for(let k=0;k<n;k++){
+                        for(const dd of[-step,step]){
+                            const trial=cur.slice();const v=trial[k]+dd;
+                            const lo=k>0?trial[k-1]+1:0,hi=k<n-1?trial[k+1]-1:m-1;
+                            if(v<lo||v>hi)continue;
+                            trial[k]=v;const sc=score(trial);
+                            if(sc<best*0.9999){best=sc;cur=trial;moved=true;}
+                        }
+                    }
+                }
+            }
+            return cur.map(i=>frames[i].time);
+        }
+        return manualMarks.map((mk,i)=>frames[idx[i]].time);
+    }
+    // 默认 end：缺失在最后面（前 n 帧有物体）
+    return manualMarks.map((mk,i)=>frames[i].time);
+}
+
+function analyzeMotion(realSize){
+    let inst,pixelLen=0;
+    if(manualMarks.length){
+        // 全手动模式：每个时刻的物体都由用户描轮廓，轮廓外接框中心即该时刻位置
+        if(!measureLine)return {needMeasure:true};
+        pixelLen=Math.hypot(measureLine.x1-measureLine.x0,measureLine.y1-measureLine.y0);
+        if(pixelLen<=0)return null;
+        const frames=manualFrameList();
+        if(manualMarks.length>frames.length)return {overCount:manualMarks.length,frameCount:frames.length};
+        if(manualMarks.length<2)return null;
+        const times=manualMarks.length===frames.length?frames.map(f=>f.time):assignMarkTimes(frames);
+        inst=manualMarks.map((mk,i)=>({cx:mk.cx,cy:mk.cy,w:mk.bbox.w,h:mk.bbox.h,t:times[i]}));
+        return finalizeMotion(inst,pixelLen,realSize,frames.length);
+    }else{
+        inst=computeAllInstances();
+        if(inst.length<2)return null;
+        // 修正(index16-⑨)：自动模式若已画测量线（如直尺 0→100cm），优先用它标定——
+        // 尺子是真实 1 m，比"小球包围盒短边"可靠得多（球有绒毛/运动模糊/离墙面更近，短边会虚高 ~26%）。
+        // 实测 1458766882.mp4：球短边 75.4px 填 5.4cm → scale=1396px/m → g=7.63；
+        // 用测量线（≈1024px/m）→ g≈10.1~10.4，与手动模式一致。
+        if(measureLine&&(measureLine.x1!==measureLine.x0||measureLine.y1!==measureLine.y0)){
+            pixelLen=Math.hypot(measureLine.x1-measureLine.x0,measureLine.y1-measureLine.y0);
+            if(pixelLen>0)return finalizeMotion(inst,pixelLen,realSize,inst.length,true);
+        }
+        // 未画测量线：比例尺 = 检测物体外接框短边（=小球直径）。
+        // 取 min(w,h)：小球近似圆，外接框对角线=直径×√2；短边是未被运动模糊拉伸的那一边。
+        pixelLen=inst.reduce((s,o)=>s+Math.min(o.w,o.h),0)/inst.length;
+        if(pixelLen<=0)return null;
+        return finalizeMotion(inst,pixelLen,realSize,inst.length);
+    }
+}
+
+function finalizeMotion(inst,pixelLen,realSize,totalFrames){
+    if(inst.length<2)return null;
+    // 实际拍摄帧率修正：视频按 fpsContainer 导出但相机以 fpsReal 拍摄时，真实时间被拉伸，
+    // 需把时刻换算回真实时间（t_real = t_video × fpsContainer / fpsReal），否则 a 被放大 (fpsReal/fpsContainer)² 倍
+    const fpsReal=parseFloat($('fpsReal')?$('fpsReal').value:'')||0;
+    if(fpsReal>0&&inst.length>=3){
+        const dts=[];for(let i=1;i<inst.length;i++){const d=inst[i].t-inst[i-1].t;if(d>0)dts.push(d);}
+        if(dts.length){
+            const ds=[...dts].sort((a,b)=>a-b);
+            const med=ds[Math.floor(ds.length/2)];
+            const fpsContainer=1/med;
+            if(fpsContainer>0&&Math.abs(fpsContainer-fpsReal)/fpsReal>0.01){
+                const k=fpsContainer/fpsReal;
+                inst=inst.map(o=>Object.assign({},o,{t:o.t*k}));
+            }
+        }
+    }
+    const scale=realSize/pixelLen; // 米/像素
+    const R=inst.map((o,i)=>({x:(o.cx-inst[0].cx)*scale,y:-(o.cy-inst[0].cy)*scale,t:o.t})); // 首帧为原点，y 轴翻转
+    const vvec=[];
+    for(let i=1;i<R.length;i++){const dt=R[i].t-R[i-1].t;vvec.push(dt>0?{x:(R[i].x-R[i-1].x)/dt,y:(R[i].y-R[i-1].y)/dt}:{x:0,y:0});}
+    const avec=[];
+    // 中心差分：vvec[i]、vvec[i-1] 分别是相邻两区间的平均速度，其时间中心相距 (t_{i+1}-t_{i-1})/2
+    for(let i=1;i<R.length-1;i++){const dt=R[i+1].t-R[i-1].t;avec.push(dt>0?{x:2*(vvec[i].x-vvec[i-1].x)/dt,y:2*(vvec[i].y-vvec[i-1].y)/dt}:{x:0,y:0});}
+    const speed=vvec.map(v=>Math.hypot(v.x,v.y));
+    const accel=avec.map(a=>Math.hypot(a.x,a.y));
+    return {inst,R,speed,accel,scale,pixelSize:pixelLen,realSize,manual:manualMarks.length>0,totalFrames};
+}
+
+function formatNum(v,d){if(!isFinite(v))return '—';return v.toFixed(d);}
+
+// 在合成照片上绘制：连接线 + 序号圆牌（钉死在各物体标记点正中心，绝不漂移；数值只在下方表格展示）
+function drawAnnotations(res){
+    const w=previewCanvas.width,h=previewCanvas.height;
+    annoCanvas.width=w;annoCanvas.height=h;
+    annoCtx.clearRect(0,0,w,h);
+    if(toolCanvas.width!==w||toolCanvas.height!==h){toolCanvas.width=w;toolCanvas.height=h;}
+    renderToolOverlay();
+    if(!res||res.inst.length<2)return;
+    const inst=res.inst;
+    // 连接相邻物体质心
+    annoCtx.strokeStyle='rgba(245,158,11,0.65)';
+    annoCtx.lineWidth=Math.max(2,w/600);
+    annoCtx.setLineDash([w/180,w/120]);
+    for(let i=0;i<inst.length-1;i++){annoCtx.beginPath();annoCtx.moveTo(inst[i].cx,inst[i].cy);annoCtx.lineTo(inst[i+1].cx,inst[i+1].cy);annoCtx.stroke();}
+    annoCtx.setLineDash([]);
+    // 序号圆牌：精确画在每个物体标记点中心（不做任何避让偏移）
+    const r=Math.max(10,Math.round(w/60));
+    const fs=Math.max(11,Math.round(r*1.1));
+    annoCtx.textBaseline='middle';
+    annoCtx.textAlign='center';
+    for(let i=0;i<inst.length;i++){
+        const cx=inst[i].cx,cy=inst[i].cy;
+        // 白边 + 绿色圆牌
+        annoCtx.beginPath();annoCtx.arc(cx,cy,r,0,Math.PI*2);
+        annoCtx.fillStyle='rgba(16,185,129,0.92)';annoCtx.fill();
+        annoCtx.lineWidth=Math.max(1.5,w/500);annoCtx.strokeStyle='#ffffff';annoCtx.stroke();
+        annoCtx.fillStyle='#fff';annoCtx.font='bold '+fs+'px -apple-system,Segoe UI,sans-serif';
+        annoCtx.fillText(String(i+1),cx,cy);
+    }
+    annoCtx.textAlign='left';
+}
+
+function avgDt(res){if(res.inst.length<2)return 0;let s=0;for(let i=0;i<res.inst.length-1;i++)s+=res.inst[i+1].t-res.inst[i].t;return s/(res.inst.length-1);}
+
+// 构建数据表 + 公式 + AI 文字结论
+function populateAnalysis(res){
+    const scale=res.scale;
+    const lenName=res.manual?'测量线段长度':'物体像素尺寸';
+    const ignored=(res.totalFrames&&res.totalFrames>res.inst.length)?'　|　⚠️ 已忽略 '+(res.totalFrames-res.inst.length)+' 个未标记时刻':'';
+    // 匀加速抛物线拟合（y 向下为正）：对标记噪声不敏感，是判断加速度的可信依据
+    const fit=quadFitStats(res.inst.map(o=>o.t),res.R.map(r=>-r.y));
+    let fitTxt='';
+    if(fit){
+        res.fit=fit;
+        fitTxt='　|　📐 <strong>拟合加速度 ≈ '+formatNum(fit.a,2)+' m/s²</strong>（R²='+fit.r2.toFixed(4)+'）'+
+            (fit.r2>=0.99?'　✅ 与匀加速假设吻合':'　⚠️ 拟合度偏低：时刻分配可能有误，请检查各影像对应的帧');
+    }
+    // index16 补丁④：测量线合理性提示——测量线应与「被测实物」对应，若与标记物体尺寸差 3 倍以上，
+    // 多半是拖线画短/画长了（实测：把约29cm的尺段当成100cm，加速度被放大3.5倍）
+    let measureWarn='';
+    if(res.manual&&manualMarks.length>=2){
+        // index16 补丁⑧：手动模式下「标记物体平均尺寸」= 画笔笔画的包围盒（≈画笔直径），
+        // 与测量线（尺子全长）本来就不该相等——旧警告在这里必然误报（实测 1027.9px vs 25px）。
+        // 改为只提示真正有用的信息：缺失时刻的分配是否正确。
+        const miss=(res.totalFrames||0)-res.inst.length;
+        if(miss>0){
+            const sel=($('missingPos')&&$('missingPos').value)||'end';
+            const name={end:'最后面',start:'最前面',auto:'中间某处（按间距自动推断）'}[sel]||sel;
+            const firstT=res.inst.length?formatNum(res.inst[0].t,3):'—';
+            const lastT=res.inst.length?formatNum(res.inst[res.inst.length-1].t,3):'—';
+            measureWarn='　<span style="color:#f59e0b">⚠ 已忽略 '+miss+' 个未标记时刻，当前按「'+name+'」分配：标记被指定为 '+firstT+'~'+lastT+' s。<b>时刻错位不影响拟合加速度，但会让速度整体偏移</b>。请核对第 1 个标记是否真的落在第 1 个有球的时刻；不确定就改「缺失时刻在」选项，或把取窗缩短到「每帧都有球」再全部标记。</span>';
+        }
+    }else if(!res.manual&&res.inst&&res.inst.length>=2){
+        // index16 补丁⑥：自动模式的比例尺 = 「线段真实长度」÷ 检测物体外接框短边（=小球直径）。
+        // 自动模式下 measureLine 完全不参与计算（analyzeMotion 只在 manualMarks 非空时才用它）。
+        // 典型误用：该输入框填了直尺长度 100(cm)，而它实际代表"小球直径" → 比例尺被放大几十倍。
+        // 实测 1458766882.mp4：填 100cm + 旧检测(短边被手撑到 287px) → scale=1/287=0.003483 m/px，
+        // 比正确值 ≈1/1024=0.000977 大 3.56 倍，g 被放大 3.56 倍（7.4 → 26.36）。
+        const sizes=res.inst.map(o=>Math.min(o.w,o.h)).sort((a,b)=>a-b);
+        const med=sizes[Math.floor(sizes.length/2)],mx=sizes[sizes.length-1],mn=sizes[0];
+        let w2='';
+        if(mx>2.2*mn) w2+='⚠ 各帧检测到的物体短边 '+formatNum(mn,0)+'~'+formatNum(mx,0)+' px（相差>2.2倍），疑似仍被手/臂/背景污染：建议提高差分阈值，或把取窗起点挪到球已离手之后；';
+        if(!measureLine&&fit&&fit.a>15) w2+='⚠ 拟合加速度 '+formatNum(fit.a,2)+' m/s² 远大于 g：自动模式下「线段真实长度」应填<b>小球真实直径</b>（如 5.4 cm），<b>不能填直尺长度</b>；自动模式完全不使用你画的测量线。想用直尺标定请改用「手动标记」模式；';
+        else if(!measureLine&&fit&&fit.a>11.5) w2+='⚠ 拟合加速度 '+formatNum(fit.a,2)+' m/s² 偏大：请确认「线段真实长度」填的是<b>小球直径</b>（自动模式）而不是尺子长度；若想用尺子标定请改用「手动标记」模式；';
+        else if(fit&&fit.a<8.5) w2+='⚠ 拟合加速度 '+formatNum(fit.a,2)+' m/s² 偏小：可能是慢动作视频（可填「实际拍摄帧率」），或小球直径填大了；';
+        if(w2) measureWarn='　<span style="color:#f59e0b">'+w2+'（中位数短边 '+formatNum(med,1)+' px）</span>';
+    }
+    $('analysisInfo').innerHTML='📏 像素比例尺：<strong>1 px = '+formatNum(scale,6)+' m</strong>　（'+lenName+' '+formatNum(res.realSize,4)+' m ÷ 照片上 '+formatNum(res.pixelSize,1)+' px）　|　运动影像数：'+res.inst.length+(res.manual?'/'+res.totalFrames:'')+'　|　相邻平均时间间隔 Δt ≈ '+formatNum(avgDt(res),3)+' s'+(res.manual?'　|　🖐 手动标记':'')+ignored+measureWarn+(window.__timeAxisFixed?'　<span style="color:#f59e0b">⚠ 已自动修复异常抽帧时间轴（详见控制台），建议重新提取帧</span>':'')+'<br>'+fitTxt;
+    let html='<table class="analysis-table"><thead><tr><th>序号</th><th>时刻 t (s)</th><th>位置 (x, y) m</th><th>速度 v (m/s)</th><th>加速度 a (m/s²)</th></tr></thead><tbody>';
+    for(let i=0;i<res.R.length;i++){
+        const v=i>=1?formatNum(res.speed[i-1],3):'—';
+        const a=(i>=1&&i<=res.R.length-2)?formatNum(res.accel[i-1],3):'—';
+        html+='<tr><td>'+(i+1)+'</td><td>'+formatNum(res.inst[i].t,3)+'</td><td>('+formatNum(res.R[i].x,3)+', '+formatNum(res.R[i].y,3)+')</td><td>'+v+'</td><td>'+a+'</td></tr>';
+    }
+    html+='</tbody></table>';
+    $('analysisTableWrap').innerHTML=html;
+    $('formulaBox').innerHTML='<h5>📐 运动学计算公式</h5>'+
+        '像素比例尺：<code>scale = L_真实 / L_像素 = '+formatNum(res.realSize,4)+' / '+formatNum(res.pixelSize,1)+' = '+formatNum(scale,6)+' m/px</code><br>'+
+        '位置换算：<code>r_i = (cx_i − cx_0, −(cy_i − cy_0)) × scale</code>（y 轴翻转，首帧为原点）<br>'+
+        '速度（相邻两时刻 i−1→i）：<code>v_i = |r_i − r_{i−1}| / (t_i − t_{i−1}) = Δs_i / Δt_i</code><br>'+
+        '加速度（中心差分，时刻 i）：<code>a_i = 2·|(v⃗_{i+1} − v⃗_{i−1})| / (t_{i+1} − t_{i−1})</code>（分母实为相邻两平均速度时间中心间距）'+
+        (res.fit?'<br>匀加速拟合（<strong>推荐以此为准</strong>，对标记误差不敏感）：<code>y(t) = v₀·t + ½·a·t²</code>，最小二乘解得 <code>a ≈ '+formatNum(res.fit.a,2)+' m/s²</code>（R²='+res.fit.r2.toFixed(4)+'，逐点差分值仅作参考）':'');
+    $('aiSummary').innerHTML=buildAISummary(res);
+}
+
+function buildAISummary(res){
+    const N=res.R.length;
+    const avgV=res.speed.reduce((s,v)=>s+v,0)/res.speed.length;
+    let txt='<strong>🤖 AI 运动分析结论：</strong><br>';
+    if(N<3){txt+='样本数不足（需 ≥ 3 个时刻）才能稳定估算加速度，请增加提取帧数后重试。';return txt;}
+    const totalDisp=Math.hypot(res.R[N-1].x-res.R[0].x,res.R[N-1].y-res.R[0].y);
+    txt+='• 物体共 '+N+' 个运动影像，平均速率约 <strong>'+formatNum(avgV,2)+' m/s</strong>。<br>';
+    if(res.fit&&res.fit.r2>=0.9){
+        const fa=res.fit.a;
+        txt+='• 抛物线拟合加速度约 <strong>'+formatNum(fa,2)+' m/s²</strong>（R²='+res.fit.r2.toFixed(4)+'，远比逐点差分可靠）。<br>';
+        if(res.fit.r2>=0.99){
+            txt+='• 加速度基本恒定，<strong>近似匀加速运动</strong>。<br>';
+            const fpsReal=parseFloat($('fpsReal')?$('fpsReal').value:'')||0;
+            const dts=[];for(let i=1;i<N;i++){const d=res.inst[i].t-res.inst[i-1].t;if(d>0)dts.push(d);}
+            const srt=[...dts].sort((a,b)=>a-b);
+            const fpsC=srt.length?1/srt[Math.floor(srt.length/2)]:0; // 文件帧率
+            const k=fa/9.8;
+            // 时间基自动侦测：a_fit = g·(fpsC/fpsReal)²，反推可能的实际拍摄帧率
+            const fSuggest=fpsC>0?fpsC*Math.sqrt(9.8/fa):0;
+            let hinted=false;
+            if(fpsC>0&&!fpsReal&&Math.abs(k-1)>0.2){
+                for(const f of[24,25,30,50,60,90,100,120,240,480]){
+                    if(Math.abs(fSuggest-f)/f<0.08){
+                        txt+='• 💡 拟合值 ≈ g 的 <strong>'+k.toFixed(2)+' 倍</strong>，符合「'+f+' fps 拍摄、按 '+fpsC.toFixed(1)+' fps 导出」的时间基特征'+(k>1?'（视频被加速）':'（慢动作）')+'。在上方「实际拍摄帧率」填 <strong>'+f+'</strong> 可自动修正。<br>';
+                        hinted=true;break;
+                    }
+                }
+            }
+            if(!hinted){
+                if(Math.abs(fa-9.8)/9.8<0.12){txt+='• 拟合值与自由落体 g ≈ 9.8 m/s² 接近（偏差 '+(Math.abs(fa-9.8)/9.8*100).toFixed(0)+'%），<strong>符合自由落体特征</strong>。<br>';}
+                else if(fa>9.8){txt+='• 拟合值明显大于 g ≈ 9.8 m/s²：常见原因——① 标记对应的帧被跳过/猜错（切换「缺失时刻」选项试试）；② 测量线段的真实长度偏小；③ 视频被加速导出（推测实际拍摄帧率约 '+formatNum(fSuggest,0)+' fps，可填入「实际拍摄帧率」验证）。<br>';}
+                else{txt+='• 拟合值明显小于 g ≈ 9.8 m/s²：常见原因——① 慢动作视频（推测实际拍摄帧率约 '+formatNum(fSuggest,0)+' fps，可填入「实际拍摄帧率」修正）；② 空气阻力/导轨摩擦；③ 投影方向不完全竖直或比例尺偏大。<br>';}
+            }
+        }else{
+            txt+='• 拟合优度偏低（R²<0.99）：时刻分配可能有误或运动非匀加速，逐点差分结果波动大属正常现象（标记误差被 1/Δt² 放大）。<br>';
+        }
+    }else{
+        const avgA=res.accel.reduce((s,a)=>s+a,0)/res.accel.length;
+        txt+='• 平均加速度约 <strong>'+formatNum(avgA,2)+' m/s²</strong>（样本少或拟合度低，仅供参考）。<br>';
+        txt+='• 提示：至少 5 个时刻、且时刻分配正确时，抛物线拟合才可靠。<br>';
+    }
+    txt+='• 首末位置直线距离约 <strong>'+formatNum(totalDisp,3)+' m</strong>。';
+    return txt;
+}
+
+function redrawAnalysis(){
+    if(!analysisActive||lastRealSize<=0)return;
+    updateMissingRow();
+    const res=analyzeMotion(lastRealSize);
+    if(res&&res.needMeasure){$('analysisInfo').textContent='⚠️ 已标记物体，但还没测量尺寸：请点「📏 测量尺寸」，在物体上从起点拖到终点画一条线，并输入其真实长度。';return;}
+    if(res&&res.overCount){$('analysisInfo').textContent='⚠️ 你描了 '+res.overCount+' 个轮廓，但照片只有 '+res.frameCount+' 帧：请用「↩ 撤销上一个」删掉多余的标记。';return;}
+    if(!res){$('analysisInfo').textContent='⚠️ 至少标记 2 个运动物体影像才能分析（请先逐个描轮廓标记物体）。';return;}
+    drawAnnotations(res);
+    populateAnalysis(res);
+}
+
+// 标记数少于帧数时，显示"缺失时刻位置"选择器
+function updateMissingRow(){
+    const row=$('missingRow');
+    if(!manualMarks.length||!analysisActive){row.style.display='none';return;}
+    const diff=manualFrameList().length-manualMarks.length;
+    if(diff>0){
+        row.style.display='flex';
+        $('missingLabel').textContent='照片共 '+manualFrameList().length+' 个时刻，已标记 '+manualMarks.length+' 个，缺失的 '+diff+' 个在：';
+    }else row.style.display='none';
+}
+$('missingPos').onchange=()=>{if(analysisActive&&lastRealSize>0)redrawAnalysis();};
+$('fpsReal').oninput=()=>{if(analysisActive&&lastRealSize>0)redrawAnalysis();};
+
+$('analyzeBtn').onclick=()=>{
+    const v=parseFloat($('objSizeInput').value);
+    if(!v||v<=0){alert('请输入测量线段对应的真实尺寸（需大于 0）');return;}
+    if(manualMarks.length&&!measureLine){alert('请先点「📏 测量尺寸」，在物体上从起点拖到终点画一条线');return;}
+    if(!manualMarks.length&&!confirm('未描轮廓标记物体，将使用自动检测。\n是否继续？'))return;
+    lastRealSize=v*parseFloat($('objSizeUnit').value);
+    analysisActive=true;
+    // 分析基于全部帧：将预览滑块拉满以显示所有影像
+    const sl=$('frameSlider');sl.value=sl.max;
+    updatePreview(); // 重绘合成图并触发 redrawAnalysis
+};
+
+// ============ 手动标记工具：描轮廓定位 + 拖线测量 ============
+function setToolMode(m){
+    toolMode=(toolMode===m)?null:m;
+    $('brushObjBtn').style.outline=toolMode==='mask'?'2px solid #38bdf8':'';
+    $('paintObjBtn').style.outline=toolMode==='paint'?'2px solid #10b981':'';
+    $('measureBtn').style.outline=toolMode==='measure'?'2px solid #fcd34d':'';
+    toolCanvas.style.pointerEvents=toolMode?'auto':'none';
+    if(toolMode==='mask')$('manualStatus').textContent='🖌 涂抹模式（画笔 '+(Math.round(manualBrush))+' px）：在物体影像上按住左键拖动涂一笔，松手后按涂抹区域质心定位（拖右侧滑块调粗细）';
+    else if(toolMode==='paint')$('manualStatus').textContent='🖌 轮廓模式：沿每个运动物体影像的边缘各画一圈，按时间先后顺序描（松开即完成一个）';
+    else if(toolMode==='measure')$('manualStatus').textContent='📏 测量模式：在物体上从起点按住左键拖到终点';
+    else if(manualMarks.length&&!measureLine)$('manualStatus').textContent='✅ 已标记 '+manualMarks.length+' 个，下一步：📏 测量尺寸';
+    else if(manualMarks.length&&measureLine)$('manualStatus').textContent='✅ 已标记 '+manualMarks.length+' 个并测量，输入线段真实长度后点「计算」';
+    else $('manualStatus').textContent='';
+}
+$('brushObjBtn').onclick=()=>setToolMode('mask');
+$('paintObjBtn').onclick=()=>setToolMode('paint');
+$('measureBtn').onclick=()=>setToolMode('measure');
+// 画笔粗细（分析涂抹工具用）
+function syncMarkBrush(){manualBrush=parseFloat($('markBrushSize').value)||24;$('markBrushVal').textContent=Math.round(manualBrush)+' px';}
+$('markBrushSize').oninput=syncMarkBrush;syncMarkBrush();
+$('undoMarkBtn').onclick=()=>{
+    if(!manualMarks.length){$('manualStatus').textContent='没有可撤销的标记';return;}
+    manualMarks.pop();renderToolOverlay();updateMissingRow();
+    $('manualStatus').textContent='↩ 已撤销，当前已标记 '+manualMarks.length+' 个';
+    if(analysisActive&&measureLine&&lastRealSize>0)redrawAnalysis();
+};
+$('clearMarkBtn').onclick=()=>{
+    manualMarks=[];measureLine=null;measureDrag=null;
+    toolCtx.clearRect(0,0,toolCanvas.width,toolCanvas.height);
+    clearStrokeBuf();
+    setToolMode(null);
+    updateMissingRow();
+    if(analysisActive)redrawAnalysis();
+};
+function toolPos(e){
+    const r=toolCanvas.getBoundingClientRect();
+    return {x:(e.clientX-r.left)*(toolCanvas.width/r.width),y:(e.clientY-r.top)*(toolCanvas.height/r.height)};
+}
+function paintStroke(a,b){
+    // 同步画到屏幕层（实时显示）与离屏层（仅当前笔画，供取质心/外接框）
+    // 涂抹模式：粗笔、半透明，一笔即可覆盖物体；描轮廓模式：细线画边
+    const isMask=toolMode==='mask';
+    const lw=isMask?Math.max(6,manualBrush*toolCanvas.width/960):Math.max(3,toolCanvas.width/400);
+    for(const ctx of [toolCtx,strokeBufCtx]){
+        ctx.strokeStyle=isMask?'rgba(16,185,129,0.55)':'rgba(16,185,129,0.75)';
+        ctx.lineWidth=lw;ctx.lineCap='round';ctx.lineJoin='round';
+        ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    }
+}
+function renderToolOverlay(drag){
+    if(toolCanvas.width===0)return;
+    toolCtx.clearRect(0,0,toolCanvas.width,toolCanvas.height);
+    // 已完成的轮廓标记：细虚线框 + 编号（仅叠加显示，不会保存到合成图）
+    const lw=Math.max(1,toolCanvas.width/900),fs=Math.max(11,Math.round(toolCanvas.width/90));
+    toolCtx.font='bold '+fs+'px -apple-system,Segoe UI,sans-serif';
+    manualMarks.forEach((m,i)=>{
+        const b=m.bbox;
+        toolCtx.strokeStyle='rgba(16,185,129,0.8)';toolCtx.lineWidth=lw;toolCtx.setLineDash([6,5]);
+        toolCtx.strokeRect(b.x,b.y,b.w,b.h);
+        toolCtx.setLineDash([]);
+        toolCtx.fillStyle='rgba(16,185,129,0.9)';
+        toolCtx.fillText(String(i+1),b.x+lw*3,b.y+fs);
+    });
+    const L=drag||measureLine;
+    if(L){
+        toolCtx.strokeStyle='rgba(250,204,21,0.95)';toolCtx.lineWidth=Math.max(2,toolCanvas.width/500);toolCtx.setLineDash([10,7]);
+        toolCtx.beginPath();toolCtx.moveTo(L.x0,L.y0);toolCtx.lineTo(L.x1,L.y1);toolCtx.stroke();
+        toolCtx.setLineDash([]);
+        toolCtx.fillStyle='rgba(250,204,21,0.95)';
+        for(const p of [[L.x0,L.y0],[L.x1,L.y1]]){toolCtx.beginPath();toolCtx.arc(p[0],p[1],lw*4,0,Math.PI*2);toolCtx.fill();}
+    }
+}
+toolCanvas.addEventListener('pointerdown',e=>{
+    if(!toolMode)return;
+    e.preventDefault();
+    try{toolCanvas.setPointerCapture(e.pointerId);}catch(_){}
+    if(toolCanvas.width!==previewCanvas.width||toolCanvas.height!==previewCanvas.height){toolCanvas.width=previewCanvas.width;toolCanvas.height=previewCanvas.height;}
+    const p=toolPos(e);toolDrawing=true;toolLast=p;
+    if(toolMode==='measure'){measureDrag={x0:p.x,y0:p.y,x1:p.x,y1:p.y};renderToolOverlay(measureDrag);}
+    else{clearStrokeBuf();paintStroke(p,p);}
+});
+toolCanvas.addEventListener('pointermove',e=>{
+    if(!toolDrawing||!toolMode)return;
+    const p=toolPos(e);
+    if(toolMode==='paint'||toolMode==='mask'){paintStroke(toolLast,p);toolLast=p;}
+    else{if(measureDrag){measureDrag.x1=p.x;measureDrag.y1=p.y;renderToolOverlay(measureDrag);}}
+});
+toolCanvas.addEventListener('pointerup',e=>{
+    if(!toolDrawing)return;
+    toolDrawing=false;
+    if(toolMode==='paint'){finishPaintMark();}
+    else if(toolMode==='mask'){finishMaskMark();}
+    else if(toolMode==='measure'&&measureDrag){
+        const len=Math.hypot(measureDrag.x1-measureDrag.x0,measureDrag.y1-measureDrag.y0);
+        if(len>4){
+            measureLine=measureDrag;measureDrag=null;
+            renderToolOverlay();
+            setToolMode(null);
+            $('manualStatus').textContent='✅ 测量完成：线段 '+formatNum(len,1)+' px。输入其真实长度后点「计算」';
+            if(analysisActive&&lastRealSize>0)redrawAnalysis();
+        }else{measureDrag=null;renderToolOverlay();}
+    }
+});
+function finishPaintMark(){
+    const w=toolCanvas.width,h=toolCanvas.height;
+    const frames=manualFrameList();
+    if(manualMarks.length>=frames.length){
+        $('manualStatus').textContent='⚠️ 已标记 '+manualMarks.length+' 个（帧数 '+frames.length+'），如画错请先「↩ 撤销」再重描';
+        toolCtx.clearRect(0,0,w,h);toolDrawing=false;
+        return;
+    }
+    // 关键：外接框只从离屏墨迹层读取（仅含本次轮廓笔画），
+    // 屏幕层 toolCanvas 上还画着旧标记的虚线框，直接读它会把旧框一起算进去导致中心点漂移
+    syncStrokeBufSize();
+    const img=strokeBufCtx.getImageData(0,0,strokeBuf.width,strokeBuf.height).data;
+    let minX=strokeBuf.width,maxX=-1,minY=strokeBuf.height,maxY=-1;
+    for(let y=0;y<strokeBuf.height;y++)for(let x=0;x<strokeBuf.width;x++){if(img[(y*strokeBuf.width+x)*4+3]>10){if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;}}
+    toolCtx.clearRect(0,0,w,h); // 描画轨迹不保留，改显示虚线框标记
+    clearStrokeBuf();
+    if(maxX<0){toolDrawing=false;return;}
+    if(maxX-minX<8||maxY-minY<8){$('manualStatus').textContent='⚠️ 轮廓太小，请沿物体边缘重新画一圈';toolDrawing=false;return;}
+    const bw=maxX-minX+1,bh=maxY-minY+1;
+    // 参考点取轮廓外接框中心（大致描轮廓即可对准）
+    manualMarks.push({bbox:{x:minX,y:minY,w:bw,h:bh},cx:minX+bw/2,cy:minY+bh/2});
+    renderToolOverlay();
+    updateMissingRow();
+    const left=frames.length-manualMarks.length;
+    $('manualStatus').textContent='✅ 已标记 '+manualMarks.length+'/'+frames.length+' 个'+(left>0?'（可继续补描，也可以直接计算）':'，下一步：📏 测量尺寸');
+    if(analysisActive&&measureLine&&lastRealSize>0)redrawAnalysis();
+}
+// 涂抹选物体：松手后取涂抹像素的重心作为质心（比外接框中心更能对准不规则物体），外接框取涂抹区域
+function finishMaskMark(){
+    const w=toolCanvas.width,h=toolCanvas.height;
+    const frames=manualFrameList();
+    if(manualMarks.length>=frames.length){
+        $('manualStatus').textContent='⚠️ 已标记 '+manualMarks.length+' 个（帧数 '+frames.length+'），如画错请先「↩ 撤销」再重涂';
+        toolCtx.clearRect(0,0,w,h);toolDrawing=false;clearStrokeBuf();
+        return;
+    }
+    // 质心/外接框只从离屏墨迹层读取（仅含本次涂抹笔画），避免旧标记虚线框污染坐标
+    syncStrokeBufSize();
+    const img=strokeBufCtx.getImageData(0,0,strokeBuf.width,strokeBuf.height).data;
+    let sx=0,sy=0,c=0,minX=strokeBuf.width,maxX=-1,minY=strokeBuf.height,maxY=-1;
+    for(let y=0;y<strokeBuf.height;y++)for(let x=0;x<strokeBuf.width;x++){const al=img[(y*strokeBuf.width+x)*4+3];if(al>10){sx+=x;sy+=y;c++;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;}}
+    clearStrokeBuf();
+    if(c<30){$('manualStatus').textContent='⚠️ 涂抹区域太小，请在物体上重新涂一笔';toolDrawing=false;return;}
+    const bw=maxX-minX+1,bh=maxY-minY+1;
+    // 质心取涂抹像素重心
+    manualMarks.push({bbox:{x:minX,y:minY,w:bw,h:bh},cx:sx/c,cy:sy/c});
+    renderToolOverlay();
+    updateMissingRow();
+    const left=frames.length-manualMarks.length;
+    $('manualStatus').textContent='✅ 已标记 '+manualMarks.length+'/'+frames.length+' 个'+(left>0?'（可继续补涂，也可以直接计算）':'，下一步：📏 测量尺寸');
+    if(analysisActive&&measureLine&&lastRealSize>0)redrawAnalysis();
+}
+
 
 // 在 iframe / 独立页中都能正确跳转到目标页面
 function gotoPage(url){
@@ -2385,3 +3266,180 @@ window.addEventListener('message',(e)=>{
 </div>
 </body>
 </html>
+
+<script>
+/* ===== index17 新增：x-t / v-t / a-t 运动图像（纯 Canvas，无外部依赖） =====
+   数据来源：解析 #analysisTableWrap 的数据表，与标记方式无关。
+   容器由脚本动态创建并插在 #aiSummary 之后（页面会用 innerHTML 覆盖
+   #aiSummary 的内容，所以容器绝不能放在它内部）。 */
+(function(){
+  'use strict';
+  function $(id){return document.getElementById(id);}
+  function firstNum(v){var m=String(v).match(/-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/);return m?parseFloat(m[0]):null;}
+  function allNums(v){var m=String(v).match(/-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g);return m?m.map(parseFloat):[];}
+  function fmtTick(v,range){var a=Math.abs(range);
+    if(a<0.01)return v.toFixed(4); if(a<0.1)return v.toFixed(3);
+    if(a<10)  return v.toFixed(2); if(a<100)return v.toFixed(1); return v.toFixed(0);}
+
+  /* ---- 动态创建图表容器（自愈：被覆盖/删除都能重建） ---- */
+  function ensureWrap(){
+    var w=$('motionChartsWrap');
+    if(w&&w.parentNode&&document.body.contains(w))return w;
+    var tgt=$('aiSummary');if(!tgt||!tgt.parentNode)return null;
+    var old=$('motionChartsWrap');if(old&&old.parentNode)old.parentNode.removeChild(old);
+    w=document.createElement('div');
+    w.id='motionChartsWrap';
+    w.style.cssText='display:none;margin-top:14px;';
+    var h='<h5 style="margin:0 0 10px;color:#1e293b;font-size:14px;">\u{1F4C8} \u8fd0\u52a8\u56fe\u50cf\uff08x-t / v-t / a-t\uff09</h5>';
+    h+='<div style="display:flex;flex-direction:column;gap:14px;">';
+    h+='<div><div style="font-size:12px;color:#334155;margin-bottom:4px;"><b>x-t \u4f4d\u79fb-\u65f6\u95f4\u56fe\u50cf</b>\uff08\u6a2a\u8f74 t \u4ece\u7b2c 1 \u5e27\u8d77\u7b97\uff1b\u7eb5\u8f74 = \u6cbf\u8fd0\u52a8\u65b9\u5411\u7684\u4f4d\u79fb\uff1b\u865a\u7ebf\u4e3a\u6700\u5c0f\u4e8c\u4e58\u629b\u7269\u7ebf\u62df\u5408\uff09</div>'
+      +'<canvas id="chartXT" width="760" height="230" style="width:100%;height:auto;background:#ffffff;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;"></canvas></div>';
+    h+='<div><div style="font-size:12px;color:#334155;margin-bottom:4px;"><b>v-t \u901f\u5ea6-\u65f6\u95f4\u56fe\u50cf</b>\uff08\u865a\u7ebf\u4e3a\u6700\u5c0f\u4e8c\u4e58\u62df\u5408 v = v\u2080 + a\u00B7t\uff0c\u659c\u7387\u5373\u52a0\u901f\u5ea6\uff09</div>'
+      +'<canvas id="chartVT" width="760" height="230" style="width:100%;height:auto;background:#ffffff;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;"></canvas></div>';
+    h+='<div><div style="font-size:12px;color:#334155;margin-bottom:4px;"><b>a-t \u52a0\u901f\u5ea6-\u65f6\u95f4\u56fe\u50cf</b>\uff08\u9010\u70b9\u4e2d\u5fc3\u5dee\u5206\u566a\u58f0\u5927\uff0c\u4ee5\u6c34\u5e73\u7ebf\u5747\u503c\u4e3a\u51c6\uff1b\u7ea2\u8272\u865a\u7ebf = g = 9.8 m/s\u00B2 \u53c2\u8003\u7ebf\uff09</div>'
+      +'<canvas id="chartAT" width="760" height="230" style="width:100%;height:auto;background:#ffffff;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;"></canvas></div>';
+    h+='</div>';
+    w.innerHTML=h;
+    if(tgt.nextSibling)tgt.parentNode.insertBefore(w,tgt.nextSibling);
+    else tgt.parentNode.appendChild(w);
+    return w;
+  }
+
+  /* ---- 最小二乘（基 {1,t,...,t^deg}） ---- */
+  function lstsq(ts,ys,deg){
+    var n=ts.length;if(n<deg+2)return null;
+    var P=[0,0,0,0,0],B=[0,0,0],M=[[0,0,0],[0,0,0],[0,0,0]],i,k,r,c;
+    for(i=0;i<n;i++){var pw=1;for(k=0;k<=4;k++){P[k]+=pw;pw*=ts[i];}for(r=0;r<=deg;r++)B[r]+=ys[i]*Math.pow(ts[i],r);}
+    for(r=0;r<=deg;r++)for(c=0;c<=deg;c++)M[r][c]=P[r+c];
+    for(i=0;i<=deg;i++){
+      var p=i;for(var j2=i+1;j2<=deg;j2++)if(Math.abs(M[j2][i])>Math.abs(M[p][i]))p=j2;
+      var tm=M[i];M[i]=M[p];M[p]=tm;var tb=B[i];B[i]=B[p];B[p]=tb;
+      if(Math.abs(M[i][i])<1e-12)return null;
+      for(var j=0;j<=deg;j++){if(j===i)continue;var f=M[j][i]/M[i][i];for(k=i;k<=deg;k++)M[j][k]-=f*M[i][k];B[j]-=f*B[i];}
+    }
+    var out=[];for(i=0;i<=deg;i++)out.push(B[i]/M[i][i]);
+    return out;
+  }
+  function r2(ts,ys,co){
+    var n=ts.length,mv=0,i;for(i=0;i<n;i++)mv+=ys[i];mv/=n;
+    var ss=0,st=0;
+    for(i=0;i<n;i++){var f=0,pw=1;for(var k=0;k<co.length;k++){f+=co[k]*pw;pw*=ts[i];}ss+=Math.pow(ys[i]-f,2);st+=Math.pow(ys[i]-mv,2);}
+    return st>0?1-ss/st:0;
+  }
+  function evalPoly(co,t){var v=0,pw=1;for(var k=0;k<co.length;k++){v+=co[k]*pw;pw*=t;}return v;}
+  function dash(ctx,on){if(on)ctx.setLineDash([6,4]);else ctx.setLineDash([]);}
+
+  function parseTable(){
+    var wrap=$('analysisTableWrap');if(!wrap)return null;
+    var tb=wrap.querySelector('tbody');if(!tb)return null;
+    var rows=tb.querySelectorAll('tr');if(rows.length<3)return null;
+    var T=[],S=[],V=[],A=[];
+    for(var i=0;i<rows.length;i++){
+      var cs=rows[i].querySelectorAll('td');if(cs.length<5)continue;
+      var t=firstNum(cs[1].textContent);if(t===null)continue;
+      var xy=allNums(cs[2].textContent);
+      var y=xy.length>1?xy[1]:null;
+      var v=firstNum(cs[3].textContent), a=firstNum(cs[4].textContent);
+      T.push(t);S.push(y);V.push(v);A.push(a);
+    }
+    if(T.length<3)return null;
+    /* 横轴改用相对时间（从第 1 帧起算）：x-t 过原点，v-t 截距 = 初速度 */
+    var t0=T[0];for(var k2=0;k2<T.length;k2++)T[k2]-=t0;
+    /* 位移 s：沿运动方向为正（工具 y 轴向上为正，下落时取负） */
+    var y0=S[0],sgn=(S[S.length-1]-y0)<0?-1:1;
+    for(var k3=0;k3<T.length;k3++)S[k3]=(S[k3]===null)?null:sgn*(S[k3]-y0);
+    return {t:T,s:S,v:V,a:A};
+  }
+
+  function drawChart(cv,raw,opts){
+    var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    var L=60,R=16,Tp=16,B=34;
+    var pts=[];for(var i=0;i<raw.length;i++){var p=raw[i];if(p&&isFinite(p.t)&&isFinite(p.y))pts.push(p);}
+    if(pts.length<2){ctx.fillStyle='#94a3b8';ctx.font='13px system-ui,"Microsoft YaHei",sans-serif';ctx.fillText('数据不足，无法绘图',L+10,Tp+18);return false;}
+    var xs=pts.map(function(p){return p.t;}),ys=pts.map(function(p){return p.y;});
+    var x0=Math.min.apply(null,xs),x1=Math.max.apply(null,xs),y0=Math.min.apply(null,ys),y1=Math.max.apply(null,ys);
+    if(x1-x0<1e-12){x0-=0.5;x1+=0.5;}
+    if(y1-y0<1e-12){var d=Math.abs(y0)*0.1+0.5;y0-=d;y1+=d;}
+    x0-=(x1-x0)*0.08;x1+=(x1-x0)*0.08;y0-=(y1-y0)*0.14;y1+=(y1-y0)*0.14;
+    function PX(v){return L+(v-x0)/(x1-x0)*(W-L-R);}
+    function PY(v){return H-B-(v-y0)/(y1-y0)*(H-Tp-B);}
+    ctx.strokeStyle='#e5eaf0';ctx.lineWidth=1;
+    ctx.fillStyle='#64748b';ctx.font='11px system-ui,"Microsoft YaHei",sans-serif';
+    var i,NX=5,NY=5;
+    for(i=0;i<=NX;i++){var vx=x0+(x1-x0)*i/NX,x=PX(vx);ctx.beginPath();ctx.moveTo(x,Tp);ctx.lineTo(x,H-B);ctx.stroke();ctx.fillText(fmtTick(vx,x1-x0),x-16,H-B+14);}
+    for(i=0;i<=NY;i++){var vy=y0+(y1-y0)*i/NY,y=PY(vy);ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(W-R,y);ctx.stroke();ctx.fillText(fmtTick(vy,y1-y0),6,y+4);}
+    ctx.strokeStyle='#94a3b8';ctx.beginPath();ctx.moveTo(L,Tp);ctx.lineTo(L,H-B);ctx.lineTo(W-R,H-B);ctx.stroke();
+    if(opts.extra)opts.extra(ctx,PX,PY);
+    ctx.fillStyle=opts.color;
+    for(i=0;i<pts.length;i++){ctx.beginPath();ctx.arc(PX(pts[i].t),PY(pts[i].y),3.2,0,6.2832);ctx.fill();}
+    if(opts.legend){
+      ctx.font='12px system-ui,"Microsoft YaHei",sans-serif';
+      var tw=ctx.measureText(opts.legend).width;
+      ctx.fillStyle='rgba(255,255,255,0.92)';ctx.fillRect(L+8,Tp+6,tw+14,19);
+      ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1;ctx.strokeRect(L+8,Tp+6,tw+14,19);
+      ctx.fillStyle='#0f172a';ctx.fillText(opts.legend,L+15,Tp+20);
+    }
+    return true;
+  }
+
+  function render(){
+    var w=ensureWrap();if(!w)return;
+    var d=parseTable();
+    if(!d){w.style.display='none';return;}
+    w.style.display='block';
+    var i;
+
+    /* x-t */
+    var sPts=[];for(i=0;i<d.t.length;i++)if(d.s[i]!==null)sPts.push({t:d.t[i],y:d.s[i]});
+    var qc=lstsq(sPts.map(function(p){return p.t;}),sPts.map(function(p){return p.y;}),2);
+    var leg='s-t 散点（n='+sPts.length+'）';
+    if(qc){var r2q=r2(sPts.map(function(p){return p.t;}),sPts.map(function(p){return p.y;}),qc);
+      leg='拟合 s = v\u2080t + \u00BDat\u00B2：a \u2248 '+(2*qc[2]).toFixed(2)+' m/s\u00B2（R\u00B2='+r2q.toFixed(4)+'）';}
+    drawChart($('chartXT'),sPts,{color:'#2563eb',legend:leg,extra:qc?function(ctx,PX,PY){
+      var tmin=sPts[0].t,tmax=sPts[sPts.length-1].t;
+      ctx.strokeStyle='#2563eb';ctx.lineWidth=1.6;dash(ctx,true);ctx.beginPath();
+      for(var k=0;k<=80;k++){var t=tmin+(tmax-tmin)*k/80,y=evalPoly(qc,t);if(k===0)ctx.moveTo(PX(t),PY(y));else ctx.lineTo(PX(t),PY(y));}
+      ctx.stroke();dash(ctx,false);
+    }:null});
+
+    /* v-t */
+    var vPts=[];for(i=0;i<d.t.length;i++)if(d.v[i]!==null)vPts.push({t:d.t[i],y:d.v[i]});
+    var lc=lstsq(vPts.map(function(p){return p.t;}),vPts.map(function(p){return p.y;}),1);
+    var legv='v-t 散点（n='+vPts.length+'）';
+    if(lc){var r2l=r2(vPts.map(function(p){return p.t;}),vPts.map(function(p){return p.y;}),lc);
+      legv='拟合 v = v\u2080 + a\u00B7t：a \u2248 '+lc[1].toFixed(2)+' m/s\u00B2，v\u2080 \u2248 '+lc[0].toFixed(2)+' m/s（R\u00B2='+r2l.toFixed(4)+'）';}
+    drawChart($('chartVT'),vPts,{color:'#16a34a',legend:legv,extra:lc?function(ctx,PX,PY){
+      var tmin=vPts[0].t,tmax=vPts[vPts.length-1].t;
+      ctx.strokeStyle='#16a34a';ctx.lineWidth=1.6;dash(ctx,true);ctx.beginPath();
+      ctx.moveTo(PX(tmin),PY(evalPoly(lc,tmin)));ctx.lineTo(PX(tmax),PY(evalPoly(lc,tmax)));ctx.stroke();dash(ctx,false);
+    }:null});
+
+    /* a-t */
+    var aPts=[];for(i=0;i<d.t.length;i++)if(d.a[i]!==null)aPts.push({t:d.t[i],y:d.a[i]});
+    var am=0;if(aPts.length){for(i=0;i<aPts.length;i++)am+=aPts[i].y;am/=aPts.length;}
+    var lega='逐点中心差分 a（n='+aPts.length+'）';
+    if(aPts.length)lega+='，平均 a \u2248 '+am.toFixed(2)+' m/s\u00B2（逐点噪声大，以此为准）';
+    drawChart($('chartAT'),aPts,{color:'#9333ea',legend:lega,extra:function(ctx,PX,PY){
+      if(aPts.length){ctx.strokeStyle='#7c3aed';ctx.lineWidth=1.4;dash(ctx,true);ctx.beginPath();
+        ctx.moveTo(PX(aPts[0].t),PY(am));ctx.lineTo(PX(aPts[aPts.length-1].t),PY(am));ctx.stroke();dash(ctx,false);}
+      if(aPts.length){ctx.strokeStyle='#ef4444';ctx.lineWidth=1.4;dash(ctx,true);ctx.beginPath();
+        ctx.moveTo(PX(aPts[0].t),PY(9.8));ctx.lineTo(PX(aPts[aPts.length-1].t),PY(9.8));ctx.stroke();dash(ctx,false);}
+    }});
+  }
+
+  function renderSafe(){try{render();}catch(e){var w=$('motionChartsWrap');if(w)w.style.display='none';if(window.console)console.error('[motionCharts]',e);}}
+
+  function bind(){
+    if(!window.MutationObserver||!document.body){setTimeout(bind,300);return;}
+    var pending=false;
+    var mo=new MutationObserver(function(){
+      if(pending)return;pending=true;
+      (window.requestAnimationFrame||function(f){setTimeout(f,16);})(function(){pending=false;renderSafe();});
+    });
+    mo.observe(document.body,{childList:true,subtree:true});
+    renderSafe();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+})();
+</script>
