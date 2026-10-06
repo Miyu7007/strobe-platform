@@ -168,6 +168,10 @@
     '最前面（后几个时刻有物体）': 'At the start (later moments have the object)',
     '中间某处（按间距自动推断）': 'Somewhere between (inferred from spacing)',
     '实际拍摄帧率：': 'Actual capture fps:',
+    '帧间隔 dt（秒）：': 'Frame interval dt (s):',
+    '例如 0.0333': 'e.g. 0.0333',
+    '⚠️ 该项目文件不含时刻信息（旧版保存/分享），已按等间隔补齐。请填真实帧间隔后重算：30fps→0.0333，60fps→0.0167，120fps→0.0083': '⚠️ This project file has no timestamp data (saved/shared by an older version); a uniform interval was assumed. Enter the true frame interval and recalculate: 30fps→0.0333, 60fps→0.0167, 120fps→0.0083',
+    '　⚠️ 缺时刻信息，已按 dt={dt}s 推定（运动分析卡可校正）': '　⚠️ No timestamps in file; assumed dt={dt}s (editable in the motion analysis card)',
     '线段真实长度：': 'Real length of the line:',
     '🤖 计算速度/加速度': '🤖 Compute velocity/acceleration',
     // ===== 运动分析卡 i18n 补全（2026-10-06）=====
@@ -703,6 +707,11 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
     <label data-i18n="实际拍摄帧率：">实际拍摄帧率：</label>
     <input type="number" id="fpsReal" placeholder="选填，如 60" data-i18n-placeholder="选填，如 60" step="any" min="0">
     <span style="font-size:11px;color:#94a3b8;" data-i18n="慢动作视频专用：若视频由高帧率拍摄后按普通帧率导出（拟合加速度明显高于 g），填拍摄帧率即可修正时间基">慢动作视频专用：若视频由高帧率拍摄后按普通帧率导出（拟合加速度明显高于 g），填拍摄帧率即可修正时间基</span>
+  </div>
+  <div class="analysis-inputs" id="dtRow" style="display:none;">
+    <label data-i18n="帧间隔 dt（秒）：">帧间隔 dt（秒）：</label>
+    <input type="number" id="frameDtInput" step="any" min="0" placeholder="例如 0.0333" data-i18n-placeholder="例如 0.0333">
+    <span style="font-size:11px;color:#f59e0b;" data-i18n-html="⚠️ 该项目文件不含时刻信息（旧版保存/分享），已按等间隔补齐。请填真实帧间隔后重算：30fps→0.0333，60fps→0.0167，120fps→0.0083">⚠️ 该项目文件不含时刻信息（旧版保存/分享），已按等间隔补齐。请填真实帧间隔后重算：30fps→0.0333，60fps→0.0167，120fps→0.0083</span>
   </div>
   <div class="analysis-inputs">
     <label data-i18n="线段真实长度：">线段真实长度：</label>
@@ -2205,6 +2214,66 @@ function handleProjectFileSelect(e){
 $('importProjectInput').onchange=handleProjectFileSelect;
 $('importProjectBtn').onclick=()=>$('importProjectInput').click();
 
+// index16 补丁⑨：旧项目文件时间轴兜底。
+// 早期版本（修复版之前保存/分享）的 .strobeproj 里帧只有 time/selected/width/height 元数据，
+// time 常为 null/undefined/全 0 —— 分析表 t 列全是「—」、逐点差分 dt 非正 → v 与 a 全 0，
+// 加速度根本算不出。兜底：检测到时间轴退化时按等间隔重建（dt 由有效时刻中位间隔、
+// 项目窗口 start/end 依次推定，最后按 30fps），并给出可编辑的「帧间隔 dt」输入框让用户校正。
+let projectTimeEstimated=false;
+function hideDtRow(){ projectTimeEstimated=false; const r=$('dtRow'); if(r) r.style.display='none'; }
+function validFrameTimes(){
+    const out=[];
+    for(let i=0;i<extractedAutoFrames.length;i++){
+        const f=extractedAutoFrames[i];
+        if(f&&typeof f.time==='number'&&isFinite(f.time))out.push({i:i,t:f.time});
+    }
+    return out;
+}
+function rebuildTimeAxis(dt){
+    const n=extractedAutoFrames.length;
+    for(let i=0;i<n;i++){
+        const tv=i*dt;
+        if(extractedAutoFrames[i])extractedAutoFrames[i].time=tv;
+        if(extractedBrushFrames[i]){extractedBrushFrames[i].time=tv;if(extractedBrushFrames[i].reqTime!=null)extractedBrushFrames[i].reqTime=tv;}
+    }
+    instCache=null;instCacheKey=''; // 必须清缓存，否则 computeAllInstances 命中旧结果
+}
+function fillMissingTimes(dt){
+    const ok=validFrameTimes();
+    if(!ok.length){rebuildTimeAxis(dt);return;}
+    const base=ok[0].t-ok[0].i*dt;
+    for(let i=0;i<extractedAutoFrames.length;i++){
+        const f=extractedAutoFrames[i];if(!f)continue;
+        if(typeof f.time==='number'&&isFinite(f.time))continue;
+        const tv=base+i*dt;
+        f.time=tv;
+        if(extractedBrushFrames[i]){extractedBrushFrames[i].time=tv;if(extractedBrushFrames[i].reqTime!=null)extractedBrushFrames[i].reqTime=tv;}
+    }
+    instCache=null;instCacheKey='';
+}
+// 返回 true 表示时间轴被兜底重建/补齐（需要提示用户可校正 dt）
+function applyEstimatedTimeAxis(){
+    const n=extractedAutoFrames.length;
+    if(n<2){hideDtRow();return false;}
+    const ok=validFrameTimes();
+    const distinct=new Set(ok.map(o=>Math.round(o.t*1000)));
+    if(ok.length===n&&distinct.size>=2){hideDtRow();return false;} // 时间轴正常，无需干预
+    // 推定 dt：① 有效时刻的中位间隔 ② 项目窗口 (end-start)/(n-1) ③ 兜底 30fps
+    let dt=0;
+    if(ok.length>=2){
+        const sorted=ok.map(o=>o.t).sort((a,b)=>a-b);const gaps=[];
+        for(let i=1;i<sorted.length;i++){const g=sorted[i]-sorted[i-1];if(g>1e-6)gaps.push(g);}
+        if(gaps.length){gaps.sort((a,b)=>a-b);dt=gaps[Math.floor(gaps.length/2)];}
+    }
+    if(!(dt>0)&&endTime>startTime&&n>1)dt=(endTime-startTime)/(n-1);
+    if(!(dt>0))dt=1/30;
+    if(ok.length>=2&&distinct.size>=2)fillMissingTimes(dt); else rebuildTimeAxis(dt);
+    projectTimeEstimated=true;
+    const inp=$('frameDtInput');if(inp)inp.value=dt.toFixed(4);
+    const row=$('dtRow');if(row)row.style.display='flex';
+    console.warn('[时间轴兜底] 项目文件时刻缺失/退化（有效 '+ok.length+'/'+n+'），已按 dt='+dt.toFixed(4)+'s 重建；可在运动分析卡「帧间隔 dt」校正');
+    return true;
+}
 async function loadProjectFile(file){
     try{
         resetAnalysisMarks(); // 载入项目 = 新一轮：清掉上一轮的标记与标注
@@ -2307,6 +2376,8 @@ async function loadProjectFile(file){
             autoBgFrameIndex=-1;
         }
         startTime=data.startTime||0;endTime=data.endTime||0;
+        // index16 补丁⑨：旧项目文件时刻缺失 → 兜底重建时间轴（见 applyEstimatedTimeAxis）
+        const timeAxisFixed=applyEstimatedTimeAxis();
         projectLoaded=true;currentProjectName=file.name;
 
         $('modeSelector').style.display='block';
@@ -2323,6 +2394,9 @@ async function loadProjectFile(file){
             status.textContent=t('✅ 项目已加载：{n}帧（{mode}）',{n:extractedAutoFrames.length,mode:currentMode});
         }else{
             status.textContent=t('⚠️ 项目已加载：{n}帧（{mode}，跳过 {m} 损坏帧）',{n:extractedAutoFrames.length,mode:currentMode,m:skipped});
+        }
+        if(timeAxisFixed){
+            status.textContent+=t('　⚠️ 缺时刻信息，已按 dt={dt}s 推定（运动分析卡可校正）',{dt:($('frameDtInput')?$('frameDtInput').value:'')});
         }
         console.log('[DEBUG] 项目加载完成，mode:',currentMode);
     }catch(err){
@@ -2789,6 +2863,7 @@ function updateMissingRow(){
 }
 $('missingPos').onchange=()=>{if(analysisActive&&lastRealSize>0)redrawAnalysis();};
 $('fpsReal').oninput=()=>{if(analysisActive&&lastRealSize>0)redrawAnalysis();};
+$('frameDtInput').oninput=()=>{const d=parseFloat($('frameDtInput').value);if(d>0){rebuildTimeAxis(d);if(analysisActive&&lastRealSize>0)redrawAnalysis();}};
 
 $('analyzeBtn').onclick=()=>{
     const v=parseFloat($('objSizeInput').value);
