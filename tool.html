@@ -170,6 +170,83 @@
     '实际拍摄帧率：': 'Actual capture fps:',
     '线段真实长度：': 'Real length of the line:',
     '🤖 计算速度/加速度': '🤖 Compute velocity/acceleration',
+    // ===== 运动分析卡 i18n 补全（2026-10-06）=====
+    '操作步骤：用下列任一种方式标记每个运动物体影像的位置（<strong>按运动时间先后顺序</strong>，大致即可）：<strong style="color:#38bdf8;">🖌 涂抹选物体</strong>（更快——调好画笔粗细后在物体上拖一笔，松手按<strong>涂抹区域质心</strong>定位）或 <strong style="color:#10b981;">🖐 逐个描轮廓</strong>（沿边缘画一圈）；画错了点「↩ 撤销」，物体没入画面的时刻可不描。然后点 <strong style="color:#fcd34d;">📏 测量尺寸</strong> 在物体上拖一条线，输入其真实长度后点「计算」，即得各时刻速度与加速度。标记数少于帧数时会询问缺失时刻位置以保证时间对齐。': 'Steps: mark the position of each moving-object image using either method (<strong>in chronological order</strong>, roughly is fine): <strong style="color:#38bdf8;">🖌 Brush-select object</strong> (faster — set the brush size, drag one stroke over the object; on release it is located by the <strong>centroid of the brushed area</strong>) or <strong style="color:#10b981;">🖐 Trace outlines</strong> (draw a loop along the edge); click「↩ Undo」if wrong, and moments where the object is out of frame can be skipped. Then click <strong style="color:#fcd34d;">📏 Measure size</strong>, drag a line across the object, enter its real length and click「Compute」to get the velocity and acceleration at every moment. If marks are fewer than frames, you will be asked where the missing moments are to keep the timeline aligned.',
+    '慢动作视频专用：若视频由高帧率拍摄后按普通帧率导出（拟合加速度明显高于 g），填拍摄帧率即可修正时间基': 'For slow-motion videos: if the video was shot at a high frame rate but exported at a normal one (fitted acceleration clearly higher than g), enter the capture fps to fix the time base',
+    '选填，如 60': 'Optional, e.g. 60',
+    '例如 5': 'e.g. 5',
+    'm（米）': 'm (meters)',
+    'cm（厘米）': 'cm (centimeters)',
+    'mm（毫米）': 'mm (millimeters)',
+    '⚠️ 两模式的含义不同：<b style="color:#38bdf8">自动检测模式</b>——此项＝<b style="color:#38bdf8">小球真实直径</b>（如 5.4 cm），<b style="color:#f59e0b">画的测量线不参与计算</b>； <b style="color:#38bdf8">手动标记模式</b>——此项＝<b style="color:#38bdf8">你画的那条测量线的真实长度</b>（如直尺 0→100 cm 填 100）。': '⚠️ This field means different things in the two modes: <b style="color:#38bdf8">Auto-detect mode</b> — enter the <b style="color:#38bdf8">real diameter of the ball</b> (e.g. 5.4 cm); <b style="color:#f59e0b">the drawn measure line is NOT used in the calculation</b>. <b style="color:#38bdf8">Manual marking mode</b> — enter the <b style="color:#38bdf8">real length of the measure line you drew</b> (e.g. ruler 0→100 cm, enter 100).',
+    '📐 <b style="color:#38bdf8">自动模式两种标定（二选一）</b>：① <b>画了📏测量线</b>（推荐，如直尺 0→100 cm 画一条线）→「线段真实长度」填<b style="color:#fcd34d;">测量线的真实长度</b>（尺 1 m 填 100 cm）——这是最可靠的方式，直尺是真实 1 m，不受小球绒毛/运动模糊/离墙远近影响；② <b>没画测量线</b> →「线段真实长度」填<b style="color:#fcd34d;">小球真实直径</b>（如网球 6.7 cm）。<b style="color:#f59e0b;">注意：若球比尺子更靠近相机，用球径标定会偏小；用尺子标定更稳。</b>': '📐 Two calibration options in auto mode (choose one): ① <b>A 📏 measure line was drawn</b> (recommended, e.g. draw a line along a ruler 0→100 cm) → enter the <b style="color:#fcd34d;">real length of the measure line</b> (a 1 m ruler → 100 cm) — the most reliable way, since the ruler is a true 1 m and unaffected by ball fuzz / motion blur / distance to the wall; ② <b>No measure line</b> → enter the <b style="color:#fcd34d;">real diameter of the ball</b> (e.g. tennis ball 6.7 cm). <b style="color:#f59e0b;">Note: if the ball is closer to the camera than the ruler, ball-diameter calibration runs small; the ruler is more reliable.</b>',
+    '测量线段长度': 'Measure-line length',
+    '物体像素尺寸': 'Object pixel size',
+    '　|　⚠️ 已忽略 {n} 个未标记时刻': '　|　⚠️ Ignored {n} unmarked moment(s)',
+    '　|　📐 <strong>拟合加速度 ≈ {a} m/s²</strong>（R²={r2}）': '　|　📐 <strong>Fitted acceleration ≈ {a} m/s²</strong> (R²={r2})',
+    '　✅ 与匀加速假设吻合': '　✅ Consistent with the uniform-acceleration assumption',
+    '　⚠️ 拟合度偏低：时刻分配可能有误，请检查各影像对应的帧': '　⚠️ Low fit quality: the moment assignment may be wrong — check which frame each image corresponds to',
+    '最后面': 'At the end',
+    '最前面': 'At the start',
+    '中间某处（按间距自动推断）': 'Somewhere between (inferred from spacing)',
+    '　<span style="color:#f59e0b">⚠ 已忽略 {n} 个未标记时刻，当前按「{name}」分配：标记被指定为 {t0}~{t1} s。<b>时刻错位不影响拟合加速度，但会让速度整体偏移</b>。请核对第 1 个标记是否真的落在第 1 个有球的时刻；不确定就改「缺失时刻在」选项，或把取窗缩短到「每帧都有球」再全部标记。</span>': '　<span style="color:#f59e0b">⚠ Ignored {n} unmarked moment(s); currently assigned as「{name}」: marks are mapped to {t0}~{t1} s. <b>Misaligned moments do not affect the fitted acceleration, but they shift all velocities.</b> Check whether the 1st mark really falls on the 1st moment where the ball appears; if unsure, change the「Missing moments at」option, or shorten the window so every frame has the ball and mark them all.</span>',
+    '⚠ 各帧检测到的物体短边 {mn}~{mx} px（相差>2.2倍），疑似仍被手/臂/背景污染：建议提高差分阈值，或把取窗起点挪到球已离手之后；': '⚠ Object short side across frames is {mn}~{mx} px (differs by >2.2×), likely still contaminated by hand/arm/background: raise the diff threshold, or move the window start to after the ball leaves the hand; ',
+    '⚠ 拟合加速度 {a} m/s² 远大于 g：自动模式下「线段真实长度」应填<b>小球真实直径</b>（如 5.4 cm），<b>不能填直尺长度</b>；自动模式完全不使用你画的测量线。想用直尺标定请改用「手动标记」模式；': '⚠ Fitted acceleration {a} m/s² is far greater than g: in auto mode「Real length of the line」should be the <b>real diameter of the ball</b> (e.g. 5.4 cm), <b>NOT the ruler length</b>; auto mode never uses the line you drew. To calibrate with a ruler, switch to「Manual marking」mode; ',
+    '⚠ 拟合加速度 {a} m/s² 偏大：请确认「线段真实长度」填的是<b>小球直径</b>（自动模式）而不是尺子长度；若想用尺子标定请改用「手动标记」模式；': '⚠ Fitted acceleration {a} m/s² is too large: confirm「Real length of the line」is the <b>ball diameter</b> (auto mode), not the ruler length; to calibrate with a ruler, switch to「Manual marking」mode; ',
+    '⚠ 拟合加速度 {a} m/s² 偏小：可能是慢动作视频（可填「实际拍摄帧率」），或小球直径填大了；': '⚠ Fitted acceleration {a} m/s² is too small: this may be a slow-motion video (fill in「Actual capture fps」), or the ball diameter was entered too large; ',
+    '　<span style="color:#f59e0b">{w}（中位数短边 {med} px）</span>': '　<span style="color:#f59e0b">{w}(median short side {med} px)</span>',
+    '📏 像素比例尺：<strong>1 px = {scale} m</strong>　（{lenName} {real} m ÷ 照片上 {px} px）　|　运动影像数：{cnt}{suffix}　|　相邻平均时间间隔 Δt ≈ {dt} s{manualTag}{ignored}{measureWarn}{fixed}<br>{fitTxt}': '📏 Pixel scale: <strong>1 px = {scale} m</strong>　({lenName} {real} m ÷ {px} px on the photo)　|　Motion images: {cnt}{suffix}　|　Average adjacent time gap Δt ≈ {dt} s{manualTag}{ignored}{measureWarn}{fixed}<br>{fitTxt}',
+    '　|　🖐 手动标记': '　|　🖐 Manual marks',
+    '　<span style="color:#f59e0b">⚠ 已自动修复异常抽帧时间轴（详见控制台），建议重新提取帧</span>': '　<span style="color:#f59e0b">⚠ Abnormal frame-extraction timeline was auto-fixed (see console); re-extracting frames is recommended</span>',
+    '序号': '#',
+    '时刻 t (s)': 'Time t (s)',
+    '位置 (x, y) m': 'Position (x, y) m',
+    '速度 v (m/s)': 'Velocity v (m/s)',
+    '加速度 a (m/s²)': 'Acceleration a (m/s²)',
+    '📐 运动学计算公式': '📐 Kinematics formulas',
+    '像素比例尺：<code>scale = L_真实 / L_像素 = {a} / {b} = {c} m/px</code><br>': 'Pixel scale: <code>scale = L_real / L_pixel = {a} / {b} = {c} m/px</code><br>',
+    '位置换算：<code>r_i = (cx_i − cx_0, −(cy_i − cy_0)) × scale</code>（y 轴翻转，首帧为原点）<br>': 'Position: <code>r_i = (cx_i − cx_0, −(cy_i − cy_0)) × scale</code> (y-axis flipped; first frame is the origin)<br>',
+    '速度（相邻两时刻 i−1→i）：<code>v_i = |r_i − r_{i−1}| / (t_i − t_{i−1}) = Δs_i / Δt_i</code><br>': 'Velocity (adjacent moments i−1→i): <code>v_i = |r_i − r_{i−1}| / (t_i − t_{i−1}) = Δs_i / Δt_i</code><br>',
+    '加速度（中心差分，时刻 i）：<code>a_i = 2·|(v⃗_{i+1} − v⃗_{i−1})| / (t_{i+1} − t_{i−1})</code>（分母实为相邻两平均速度时间中心间距）': 'Acceleration (central difference, moment i): <code>a_i = 2·|(v⃗_{i+1} − v⃗_{i−1})| / (t_{i+1} − t_{i−1})</code> (the denominator is the distance between the time centers of the two adjacent average velocities)',
+    '<br>匀加速拟合（<strong>推荐以此为准</strong>，对标记误差不敏感）：<code>y(t) = v₀·t + ½·a·t²</code>，最小二乘解得 <code>a ≈ {a} m/s²</code>（R²={r2}，逐点差分值仅作参考）': '<br>Uniform-acceleration fit (<strong>recommended as the authoritative value</strong>, insensitive to marking errors): <code>y(t) = v₀·t + ½·a·t²</code>; least squares gives <code>a ≈ {a} m/s²</code> (R²={r2}; the per-point difference values are for reference only)',
+    '<strong>🤖 AI 运动分析结论：</strong><br>': '<strong>🤖 AI motion analysis conclusion:</strong><br>',
+    '样本数不足（需 ≥ 3 个时刻）才能稳定估算加速度，请增加提取帧数后重试。': 'Not enough samples (need ≥ 3 moments) to estimate the acceleration reliably; extract more frames and retry.',
+    '• 物体共 {n} 个运动影像，平均速率约 <strong>{v} m/s</strong>。<br>': '• The object has {n} motion images in total; average speed ≈ <strong>{v} m/s</strong>.<br>',
+    '• 抛物线拟合加速度约 <strong>{a} m/s²</strong>（R²={r2}，远比逐点差分可靠）。<br>': '• Parabola-fitted acceleration ≈ <strong>{a} m/s²</strong> (R²={r2}; far more reliable than per-point differencing).<br>',
+    '• 加速度基本恒定，<strong>近似匀加速运动</strong>。<br>': '• The acceleration is essentially constant — <strong>approximately uniform acceleration</strong>.<br>',
+    '• 💡 拟合值 ≈ g 的 <strong>{k} 倍</strong>，符合「{f} fps 拍摄、按 {fpsC} fps 导出」的时间基特征{tag}。在上方「实际拍摄帧率」填 <strong>{f}</strong> 可自动修正。<br>': '• 💡 The fitted value ≈ <strong>{k}×</strong> g, matching the time-base signature of「shot at {f} fps, exported at {fpsC} fps」{tag}. Fill <strong>{f}</strong> in「Actual capture fps」above to correct automatically.<br>',
+    '（视频被加速）': '(video sped up)',
+    '（慢动作）': '(slow motion)',
+    '• 拟合值与自由落体 g ≈ 9.8 m/s² 接近（偏差 {p}%），<strong>符合自由落体特征</strong>。<br>': '• The fitted value is close to the free-fall g ≈ 9.8 m/s² (deviation {p}%), <strong>consistent with free fall</strong>.<br>',
+    '• 拟合值明显大于 g ≈ 9.8 m/s²：常见原因——① 标记对应的帧被跳过/猜错（切换「缺失时刻」选项试试）；② 测量线段的真实长度偏小；③ 视频被加速导出（推测实际拍摄帧率约 {f} fps，可填入「实际拍摄帧率」验证）。<br>': '• The fitted value is clearly greater than g ≈ 9.8 m/s². Common causes: ① the frames for some marks were skipped or guessed wrong (try switching the「Missing moments at」option); ② the real length of the measure line is too small; ③ the video was sped up on export (estimated capture fps ≈ {f}; fill it in「Actual capture fps」to verify).<br>',
+    '• 拟合值明显小于 g ≈ 9.8 m/s²：常见原因——① 慢动作视频（推测实际拍摄帧率约 {f} fps，可填入「实际拍摄帧率」修正）；② 空气阻力/导轨摩擦；③ 投影方向不完全竖直或比例尺偏大。<br>': '• The fitted value is clearly smaller than g ≈ 9.8 m/s². Common causes: ① slow-motion video (estimated capture fps ≈ {f}; fill it in「Actual capture fps」to correct); ② air resistance / track friction; ③ the projection is not fully vertical or the scale is too large.<br>',
+    '• 拟合优度偏低（R²<0.99）：时刻分配可能有误或运动非匀加速，逐点差分结果波动大属正常现象（标记误差被 1/Δt² 放大）。<br>': '• Low fit quality (R²<0.99): the moment assignment may be wrong or the motion is not uniformly accelerated; large fluctuation in per-point differencing is normal (marking errors are amplified by 1/Δt²).<br>',
+    '• 平均加速度约 <strong>{a} m/s²</strong>（样本少或拟合度低，仅供参考）。<br>': '• Average acceleration ≈ <strong>{a} m/s²</strong> (few samples or low fit quality; for reference only).<br>',
+    '• 提示：至少 5 个时刻、且时刻分配正确时，抛物线拟合才可靠。<br>': '• Tip: the parabola fit is reliable only with at least 5 moments and a correct moment assignment.<br>',
+    '• 首末位置直线距离约 <strong>{d} m</strong>。': '• Straight-line distance between the first and last positions ≈ <strong>{d} m</strong>.',
+    '⚠️ 已标记物体，但还没测量尺寸：请点「📏 测量尺寸」，在物体上从起点拖到终点画一条线，并输入其真实长度。': '⚠️ Object marked but not measured yet: click「📏 Measure size」, drag a line from start to end across the object, then enter its real length.',
+    '⚠️ 你描了 {n} 个轮廓，但照片只有 {m} 帧：请用「↩ 撤销上一个」删掉多余的标记。': '⚠️ You traced {n} outlines but the photo has only {m} frames: use「↩ Undo last」to remove the extra marks.',
+    '⚠️ 至少标记 2 个运动物体影像才能分析（请先逐个描轮廓标记物体）。': '⚠️ Mark at least 2 motion images to run the analysis (trace outlines to mark the object first).',
+    '照片共 {n} 个时刻，已标记 {m} 个，缺失的 {d} 个在：': 'The photo has {n} moments in total; {m} marked. The {d} missing one(s) are at:',
+    '请输入测量线段对应的真实尺寸（需大于 0）': 'Enter the real size of the measure line (must be greater than 0)',
+    '请先点「📏 测量尺寸」，在物体上从起点拖到终点画一条线': 'First click「📏 Measure size」and drag a line from start to end across the object',
+    '未描轮廓标记物体，将使用自动检测。\n是否继续？': 'No outline marks were drawn; auto-detection will be used.\nContinue?',
+    '🖌 涂抹模式（画笔 {n} px）：在物体影像上按住左键拖动涂一笔，松手后按涂抹区域质心定位（拖右侧滑块调粗细）': '🖌 Brush mode (brush {n} px): hold the left button and drag one stroke over the object image; on release it is located by the centroid of the brushed area (adjust the size with the slider on the right)',
+    '🖌 轮廓模式：沿每个运动物体影像的边缘各画一圈，按时间先后顺序描（松开即完成一个）': '🖌 Outline mode: draw a loop along the edge of each motion image, in chronological order (release to finish one)',
+    '📏 测量模式：在物体上从起点按住左键拖到终点': '📏 Measure mode: hold the left button and drag from start to end across the object',
+    '✅ 已标记 {n} 个，下一步：📏 测量尺寸': '✅ {n} marked. Next: 📏 Measure size',
+    '✅ 已标记 {n} 个并测量，输入线段真实长度后点「计算」': '✅ {n} marked and measured. Enter the real length of the line and click「Compute」',
+    '没有可撤销的标记': 'No marks to undo',
+    '↩ 已撤销，当前已标记 {n} 个': '↩ Undone; {n} mark(s) now',
+    '✅ 测量完成：线段 {len} px。输入其真实长度后点「计算」': '✅ Measured: the line is {len} px. Enter its real length and click「Compute」',
+    '⚠️ 已标记 {n} 个（帧数 {m}），如画错请先「↩ 撤销」再重描': '⚠️ {n} marked (frame count {m}). If wrong,「↩ Undo」first, then re-trace',
+    '⚠️ 轮廓太小，请沿物体边缘重新画一圈': '⚠️ Outline too small — draw a loop along the object edge again',
+    '✅ 已标记 {a}/{b} 个{tail}': '✅ Marked {a}/{b}{tail}',
+    '（可继续补描，也可以直接计算）': ' (you can keep tracing, or compute now)',
+    '，下一步：📏 测量尺寸': '. Next: 📏 Measure size',
+    '⚠️ 已标记 {n} 个（帧数 {m}），如画错请先「↩ 撤销」再重涂': '⚠️ {n} marked (frame count {m}). If wrong,「↩ Undo」first, then re-brush',
+    '⚠️ 涂抹区域太小，请在物体上重新涂一笔': '⚠️ Brushed area too small — brush another stroke over the object',
+    '（可继续补涂，也可以直接计算）': ' (you can keep brushing, or compute now)',
   };
   function getToolLocale(){ try { return localStorage.getItem(STORAGE_KEY) || 'zh'; } catch(e){ return 'zh'; } }
   function setToolLocale(l){
@@ -190,6 +267,10 @@
       var el = nodes[i];
       el.textContent = t(el.getAttribute('data-i18n'));
     }
+    var nodesH = document.querySelectorAll('[data-i18n-html]');
+    for (var i = 0; i < nodesH.length; i++) { nodesH[i].innerHTML = t(nodesH[i].getAttribute('data-i18n-html')); }
+    var nodesP = document.querySelectorAll('[data-i18n-placeholder]');
+    for (var i = 0; i < nodesP.length; i++) { nodesP[i].placeholder = t(nodesP[i].getAttribute('data-i18n-placeholder')); }
     // 动态区域（如会员条）随语言刷新
     if (typeof updateMembershipBar === 'function') { try { updateMembershipBar(); } catch(e){} }
     var zh = document.getElementById('langZh'), en = document.getElementById('langEn');
@@ -596,7 +677,7 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
 </div>
 <div class="analysis-card" id="analysisCard" style="display:none;margin-top:20px;padding:16px;background:rgba(0,0,0,0.25);border:1px solid rgba(102,126,234,0.25);border-radius:12px;">
   <h4 style="color:#a5b4fc;margin-bottom:6px;font-size:15px;" data-i18n="📐 AI 运动分析（手动标记模式）">📐 AI 运动分析（手动标记模式）</h4>
-  <div class="analysis-hint">操作步骤：用下列任一种方式标记每个运动物体影像的位置（<strong>按运动时间先后顺序</strong>，大致即可）：<strong style="color:#38bdf8;">🖌 涂抹选物体</strong>（更快——调好画笔粗细后在物体上拖一笔，松手按<strong>涂抹区域质心</strong>定位）或 <strong style="color:#10b981;">🖐 逐个描轮廓</strong>（沿边缘画一圈）；画错了点「↩ 撤销」，物体没入画面的时刻可不描。然后点 <strong style="color:#fcd34d;">📏 测量尺寸</strong> 在物体上拖一条线，输入其真实长度后点「计算」，即得各时刻速度与加速度。标记数少于帧数时会询问缺失时刻位置以保证时间对齐。</div>
+  <div class="analysis-hint" data-i18n-html="操作步骤：用下列任一种方式标记每个运动物体影像的位置（<strong>按运动时间先后顺序</strong>，大致即可）：<strong style=&quot;color:#38bdf8;&quot;>🖌 涂抹选物体</strong>（更快——调好画笔粗细后在物体上拖一笔，松手按<strong>涂抹区域质心</strong>定位）或 <strong style=&quot;color:#10b981;&quot;>🖐 逐个描轮廓</strong>（沿边缘画一圈）；画错了点「↩ 撤销」，物体没入画面的时刻可不描。然后点 <strong style=&quot;color:#fcd34d;&quot;>📏 测量尺寸</strong> 在物体上拖一条线，输入其真实长度后点「计算」，即得各时刻速度与加速度。标记数少于帧数时会询问缺失时刻位置以保证时间对齐。">操作步骤：用下列任一种方式标记每个运动物体影像的位置（<strong>按运动时间先后顺序</strong>，大致即可）：<strong style="color:#38bdf8;">🖌 涂抹选物体</strong>（更快——调好画笔粗细后在物体上拖一笔，松手按<strong>涂抹区域质心</strong>定位）或 <strong style="color:#10b981;">🖐 逐个描轮廓</strong>（沿边缘画一圈）；画错了点「↩ 撤销」，物体没入画面的时刻可不描。然后点 <strong style="color:#fcd34d;">📏 测量尺寸</strong> 在物体上拖一条线，输入其真实长度后点「计算」，即得各时刻速度与加速度。标记数少于帧数时会询问缺失时刻位置以保证时间对齐。</div>
   <div class="analysis-inputs">
     <button class="btn btn-secondary btn-small" id="brushObjBtn" data-i18n="🖌 涂抹选物体">🖌 涂抹选物体</button>
     <button class="btn btn-secondary btn-small" id="paintObjBtn" data-i18n="🖐 逐个描轮廓">🖐 逐个描轮廓</button>
@@ -620,20 +701,20 @@ h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient
   </div>
   <div class="analysis-inputs">
     <label data-i18n="实际拍摄帧率：">实际拍摄帧率：</label>
-    <input type="number" id="fpsReal" placeholder="选填，如 60" step="any" min="0">
-    <span style="font-size:11px;color:#94a3b8;">慢动作视频专用：若视频由高帧率拍摄后按普通帧率导出（拟合加速度明显高于 g），填拍摄帧率即可修正时间基</span>
+    <input type="number" id="fpsReal" placeholder="选填，如 60" data-i18n-placeholder="选填，如 60" step="any" min="0">
+    <span style="font-size:11px;color:#94a3b8;" data-i18n="慢动作视频专用：若视频由高帧率拍摄后按普通帧率导出（拟合加速度明显高于 g），填拍摄帧率即可修正时间基">慢动作视频专用：若视频由高帧率拍摄后按普通帧率导出（拟合加速度明显高于 g），填拍摄帧率即可修正时间基</span>
   </div>
   <div class="analysis-inputs">
     <label data-i18n="线段真实长度：">线段真实长度：</label>
-    <input type="number" id="objSizeInput" placeholder="例如 5" step="any" min="0">
-    <select id="objSizeUnit"><option value="1">m（米）</option><option value="0.01" selected>cm（厘米）</option><option value="0.001">mm（毫米）</option></select>
+    <input type="number" id="objSizeInput" placeholder="例如 5" data-i18n-placeholder="例如 5" step="any" min="0">
+    <select id="objSizeUnit"><option value="1" data-i18n="m（米）">m（米）</option><option value="0.01" selected data-i18n="cm（厘米）">cm（厘米）</option><option value="0.001" data-i18n="mm（毫米）">mm（毫米）</option></select>
     <button class="btn btn-primary" id="analyzeBtn" data-i18n="🤖 计算速度/加速度">🤖 计算速度/加速度</button>
   </div>
-  <div style="font-size:11px;color:#94a3b8;margin:2px 0 6px;line-height:1.6;">
+  <div style="font-size:11px;color:#94a3b8;margin:2px 0 6px;line-height:1.6;" data-i18n-html="⚠️ 两模式的含义不同：<b style=&quot;color:#38bdf8&quot;>自动检测模式</b>——此项＝<b style=&quot;color:#38bdf8&quot;>小球真实直径</b>（如 5.4 cm），<b style=&quot;color:#f59e0b&quot;>画的测量线不参与计算</b>； <b style=&quot;color:#38bdf8&quot;>手动标记模式</b>——此项＝<b style=&quot;color:#38bdf8&quot;>你画的那条测量线的真实长度</b>（如直尺 0→100 cm 填 100）。">
     ⚠️ 两模式的含义不同：<b style="color:#38bdf8">自动检测模式</b>——此项＝<b style="color:#38bdf8">小球真实直径</b>（如 5.4 cm），<b style="color:#f59e0b">画的测量线不参与计算</b>；
     <b style="color:#38bdf8">手动标记模式</b>——此项＝<b style="color:#38bdf8">你画的那条测量线的真实长度</b>（如直尺 0→100 cm 填 100）。
   </div>
-    <div style="font-size:11px;color:#94a3b8;margin:4px 0 6px;line-height:1.6;">📐 <b style="color:#38bdf8">自动模式两种标定（二选一）</b>：① <b>画了📏测量线</b>（推荐，如直尺 0→100 cm 画一条线）→「线段真实长度」填<b style="color:#fcd34d;">测量线的真实长度</b>（尺 1 m 填 100 cm）——这是最可靠的方式，直尺是真实 1 m，不受小球绒毛/运动模糊/离墙远近影响；② <b>没画测量线</b> →「线段真实长度」填<b style="color:#fcd34d;">小球真实直径</b>（如网球 6.7 cm）。<b style="color:#f59e0b;">注意：若球比尺子更靠近相机，用球径标定会偏小；用尺子标定更稳。</b></div>
+    <div style="font-size:11px;color:#94a3b8;margin:4px 0 6px;line-height:1.6;" data-i18n-html="📐 <b style=&quot;color:#38bdf8&quot;>自动模式两种标定（二选一）</b>：① <b>画了📏测量线</b>（推荐，如直尺 0→100 cm 画一条线）→「线段真实长度」填<b style=&quot;color:#fcd34d;&quot;>测量线的真实长度</b>（尺 1 m 填 100 cm）——这是最可靠的方式，直尺是真实 1 m，不受小球绒毛/运动模糊/离墙远近影响；② <b>没画测量线</b> →「线段真实长度」填<b style=&quot;color:#fcd34d;&quot;>小球真实直径</b>（如网球 6.7 cm）。<b style=&quot;color:#f59e0b;&quot;>注意：若球比尺子更靠近相机，用球径标定会偏小；用尺子标定更稳。</b>">📐 <b style="color:#38bdf8">自动模式两种标定（二选一）</b>：① <b>画了📏测量线</b>（推荐，如直尺 0→100 cm 画一条线）→「线段真实长度」填<b style="color:#fcd34d;">测量线的真实长度</b>（尺 1 m 填 100 cm）——这是最可靠的方式，直尺是真实 1 m，不受小球绒毛/运动模糊/离墙远近影响；② <b>没画测量线</b> →「线段真实长度」填<b style="color:#fcd34d;">小球真实直径</b>（如网球 6.7 cm）。<b style="color:#f59e0b;">注意：若球比尺子更靠近相机，用球径标定会偏小；用尺子标定更稳。</b></div>
     <div class="analysis-info" id="analysisInfo"></div>
   <div class="analysis-table-wrap" id="analysisTableWrap"></div>
   <div class="formula-box" id="formulaBox"></div>
@@ -2503,15 +2584,15 @@ function avgDt(res){if(res.inst.length<2)return 0;let s=0;for(let i=0;i<res.inst
 // 构建数据表 + 公式 + AI 文字结论
 function populateAnalysis(res){
     const scale=res.scale;
-    const lenName=res.manual?'测量线段长度':'物体像素尺寸';
-    const ignored=(res.totalFrames&&res.totalFrames>res.inst.length)?'　|　⚠️ 已忽略 '+(res.totalFrames-res.inst.length)+' 个未标记时刻':'';
+    const lenName=res.manual?t('测量线段长度'):t('物体像素尺寸');
+    const ignored=(res.totalFrames&&res.totalFrames>res.inst.length)?t('　|　⚠️ 已忽略 {n} 个未标记时刻',{n:res.totalFrames-res.inst.length}):'';
     // 匀加速抛物线拟合（y 向下为正）：对标记噪声不敏感，是判断加速度的可信依据
     const fit=quadFitStats(res.inst.map(o=>o.t),res.R.map(r=>-r.y));
     let fitTxt='';
     if(fit){
         res.fit=fit;
-        fitTxt='　|　📐 <strong>拟合加速度 ≈ '+formatNum(fit.a,2)+' m/s²</strong>（R²='+fit.r2.toFixed(4)+'）'+
-            (fit.r2>=0.99?'　✅ 与匀加速假设吻合':'　⚠️ 拟合度偏低：时刻分配可能有误，请检查各影像对应的帧');
+        fitTxt=t('　|　📐 <strong>拟合加速度 ≈ {a} m/s²</strong>（R²={r2}）',{a:formatNum(fit.a,2),r2:fit.r2.toFixed(4)})+
+            (fit.r2>=0.99?t('　✅ 与匀加速假设吻合'):t('　⚠️ 拟合度偏低：时刻分配可能有误，请检查各影像对应的帧'));
     }
     // index16 补丁④：测量线合理性提示——测量线应与「被测实物」对应，若与标记物体尺寸差 3 倍以上，
     // 多半是拖线画短/画长了（实测：把约29cm的尺段当成100cm，加速度被放大3.5倍）
@@ -2523,10 +2604,10 @@ function populateAnalysis(res){
         const miss=(res.totalFrames||0)-res.inst.length;
         if(miss>0){
             const sel=($('missingPos')&&$('missingPos').value)||'end';
-            const name={end:'最后面',start:'最前面',auto:'中间某处（按间距自动推断）'}[sel]||sel;
+            const name={end:t('最后面'),start:t('最前面'),auto:t('中间某处（按间距自动推断）')}[sel]||sel;
             const firstT=res.inst.length?formatNum(res.inst[0].t,3):'—';
             const lastT=res.inst.length?formatNum(res.inst[res.inst.length-1].t,3):'—';
-            measureWarn='　<span style="color:#f59e0b">⚠ 已忽略 '+miss+' 个未标记时刻，当前按「'+name+'」分配：标记被指定为 '+firstT+'~'+lastT+' s。<b>时刻错位不影响拟合加速度，但会让速度整体偏移</b>。请核对第 1 个标记是否真的落在第 1 个有球的时刻；不确定就改「缺失时刻在」选项，或把取窗缩短到「每帧都有球」再全部标记。</span>';
+            measureWarn=t('　<span style="color:#f59e0b">⚠ 已忽略 {n} 个未标记时刻，当前按「{name}」分配：标记被指定为 {t0}~{t1} s。<b>时刻错位不影响拟合加速度，但会让速度整体偏移</b>。请核对第 1 个标记是否真的落在第 1 个有球的时刻；不确定就改「缺失时刻在」选项，或把取窗缩短到「每帧都有球」再全部标记。</span>',{n:miss,name:name,t0:firstT,t1:lastT});
         }
     }else if(!res.manual&&res.inst&&res.inst.length>=2){
         // index16 补丁⑥：自动模式的比例尺 = 「线段真实长度」÷ 检测物体外接框短边（=小球直径）。
@@ -2537,14 +2618,14 @@ function populateAnalysis(res){
         const sizes=res.inst.map(o=>Math.min(o.w,o.h)).sort((a,b)=>a-b);
         const med=sizes[Math.floor(sizes.length/2)],mx=sizes[sizes.length-1],mn=sizes[0];
         let w2='';
-        if(mx>2.2*mn) w2+='⚠ 各帧检测到的物体短边 '+formatNum(mn,0)+'~'+formatNum(mx,0)+' px（相差>2.2倍），疑似仍被手/臂/背景污染：建议提高差分阈值，或把取窗起点挪到球已离手之后；';
-        if(!measureLine&&fit&&fit.a>15) w2+='⚠ 拟合加速度 '+formatNum(fit.a,2)+' m/s² 远大于 g：自动模式下「线段真实长度」应填<b>小球真实直径</b>（如 5.4 cm），<b>不能填直尺长度</b>；自动模式完全不使用你画的测量线。想用直尺标定请改用「手动标记」模式；';
-        else if(!measureLine&&fit&&fit.a>11.5) w2+='⚠ 拟合加速度 '+formatNum(fit.a,2)+' m/s² 偏大：请确认「线段真实长度」填的是<b>小球直径</b>（自动模式）而不是尺子长度；若想用尺子标定请改用「手动标记」模式；';
-        else if(fit&&fit.a<8.5) w2+='⚠ 拟合加速度 '+formatNum(fit.a,2)+' m/s² 偏小：可能是慢动作视频（可填「实际拍摄帧率」），或小球直径填大了；';
-        if(w2) measureWarn='　<span style="color:#f59e0b">'+w2+'（中位数短边 '+formatNum(med,1)+' px）</span>';
+        if(mx>2.2*mn) w2+=t('⚠ 各帧检测到的物体短边 {mn}~{mx} px（相差>2.2倍），疑似仍被手/臂/背景污染：建议提高差分阈值，或把取窗起点挪到球已离手之后；',{mn:formatNum(mn,0),mx:formatNum(mx,0)});
+        if(!measureLine&&fit&&fit.a>15) w2+=t('⚠ 拟合加速度 {a} m/s² 远大于 g：自动模式下「线段真实长度」应填<b>小球真实直径</b>（如 5.4 cm），<b>不能填直尺长度</b>；自动模式完全不使用你画的测量线。想用直尺标定请改用「手动标记」模式；',{a:formatNum(fit.a,2)});
+        else if(!measureLine&&fit&&fit.a>11.5) w2+=t('⚠ 拟合加速度 {a} m/s² 偏大：请确认「线段真实长度」填的是<b>小球直径</b>（自动模式）而不是尺子长度；若想用尺子标定请改用「手动标记」模式；',{a:formatNum(fit.a,2)});
+        else if(fit&&fit.a<8.5) w2+=t('⚠ 拟合加速度 {a} m/s² 偏小：可能是慢动作视频（可填「实际拍摄帧率」），或小球直径填大了；',{a:formatNum(fit.a,2)});
+        if(w2) measureWarn=t('　<span style="color:#f59e0b">{w}（中位数短边 {med} px）</span>',{w:w2,med:formatNum(med,1)});
     }
-    $('analysisInfo').innerHTML='📏 像素比例尺：<strong>1 px = '+formatNum(scale,6)+' m</strong>　（'+lenName+' '+formatNum(res.realSize,4)+' m ÷ 照片上 '+formatNum(res.pixelSize,1)+' px）　|　运动影像数：'+res.inst.length+(res.manual?'/'+res.totalFrames:'')+'　|　相邻平均时间间隔 Δt ≈ '+formatNum(avgDt(res),3)+' s'+(res.manual?'　|　🖐 手动标记':'')+ignored+measureWarn+(window.__timeAxisFixed?'　<span style="color:#f59e0b">⚠ 已自动修复异常抽帧时间轴（详见控制台），建议重新提取帧</span>':'')+'<br>'+fitTxt;
-    let html='<table class="analysis-table"><thead><tr><th>序号</th><th>时刻 t (s)</th><th>位置 (x, y) m</th><th>速度 v (m/s)</th><th>加速度 a (m/s²)</th></tr></thead><tbody>';
+    $('analysisInfo').innerHTML=t('📏 像素比例尺：<strong>1 px = {scale} m</strong>　（{lenName} {real} m ÷ 照片上 {px} px）　|　运动影像数：{cnt}{suffix}　|　相邻平均时间间隔 Δt ≈ {dt} s{manualTag}{ignored}{measureWarn}{fixed}<br>{fitTxt}',{scale:formatNum(scale,6),lenName:lenName,real:formatNum(res.realSize,4),px:formatNum(res.pixelSize,1),cnt:res.inst.length,suffix:res.manual?'/'+res.totalFrames:'',dt:formatNum(avgDt(res),3),manualTag:res.manual?t('　|　🖐 手动标记'):'',ignored:ignored,measureWarn:measureWarn,fixed:window.__timeAxisFixed?t('　<span style="color:#f59e0b">⚠ 已自动修复异常抽帧时间轴（详见控制台），建议重新提取帧</span>'):'',fitTxt:fitTxt});
+    let html='<table class="analysis-table"><thead><tr><th>'+t('序号')+'</th><th>'+t('时刻 t (s)')+'</th><th>'+t('位置 (x, y) m')+'</th><th>'+t('速度 v (m/s)')+'</th><th>'+t('加速度 a (m/s²)')+'</th></tr></thead><tbody>';
     for(let i=0;i<res.R.length;i++){
         const v=i>=1?formatNum(res.speed[i-1],3):'—';
         const a=(i>=1&&i<=res.R.length-2)?formatNum(res.accel[i-1],3):'—';
@@ -2552,27 +2633,27 @@ function populateAnalysis(res){
     }
     html+='</tbody></table>';
     $('analysisTableWrap').innerHTML=html;
-    $('formulaBox').innerHTML='<h5>📐 运动学计算公式</h5>'+
-        '像素比例尺：<code>scale = L_真实 / L_像素 = '+formatNum(res.realSize,4)+' / '+formatNum(res.pixelSize,1)+' = '+formatNum(scale,6)+' m/px</code><br>'+
-        '位置换算：<code>r_i = (cx_i − cx_0, −(cy_i − cy_0)) × scale</code>（y 轴翻转，首帧为原点）<br>'+
-        '速度（相邻两时刻 i−1→i）：<code>v_i = |r_i − r_{i−1}| / (t_i − t_{i−1}) = Δs_i / Δt_i</code><br>'+
-        '加速度（中心差分，时刻 i）：<code>a_i = 2·|(v⃗_{i+1} − v⃗_{i−1})| / (t_{i+1} − t_{i−1})</code>（分母实为相邻两平均速度时间中心间距）'+
-        (res.fit?'<br>匀加速拟合（<strong>推荐以此为准</strong>，对标记误差不敏感）：<code>y(t) = v₀·t + ½·a·t²</code>，最小二乘解得 <code>a ≈ '+formatNum(res.fit.a,2)+' m/s²</code>（R²='+res.fit.r2.toFixed(4)+'，逐点差分值仅作参考）':'');
+    $('formulaBox').innerHTML='<h5>'+t('📐 运动学计算公式')+'</h5>'+
+        t('像素比例尺：<code>scale = L_真实 / L_像素 = {a} / {b} = {c} m/px</code><br>',{a:formatNum(res.realSize,4),b:formatNum(res.pixelSize,1),c:formatNum(scale,6)})+
+        t('位置换算：<code>r_i = (cx_i − cx_0, −(cy_i − cy_0)) × scale</code>（y 轴翻转，首帧为原点）<br>')+
+        t('速度（相邻两时刻 i−1→i）：<code>v_i = |r_i − r_{i−1}| / (t_i − t_{i−1}) = Δs_i / Δt_i</code><br>')+
+        t('加速度（中心差分，时刻 i）：<code>a_i = 2·|(v⃗_{i+1} − v⃗_{i−1})| / (t_{i+1} − t_{i−1})</code>（分母实为相邻两平均速度时间中心间距）')+
+        (res.fit?t('<br>匀加速拟合（<strong>推荐以此为准</strong>，对标记误差不敏感）：<code>y(t) = v₀·t + ½·a·t²</code>，最小二乘解得 <code>a ≈ {a} m/s²</code>（R²={r2}，逐点差分值仅作参考）',{a:formatNum(res.fit.a,2),r2:res.fit.r2.toFixed(4)}):'');
     $('aiSummary').innerHTML=buildAISummary(res);
 }
 
 function buildAISummary(res){
     const N=res.R.length;
     const avgV=res.speed.reduce((s,v)=>s+v,0)/res.speed.length;
-    let txt='<strong>🤖 AI 运动分析结论：</strong><br>';
-    if(N<3){txt+='样本数不足（需 ≥ 3 个时刻）才能稳定估算加速度，请增加提取帧数后重试。';return txt;}
+    let txt=t('<strong>🤖 AI 运动分析结论：</strong><br>');
+    if(N<3){txt+=t('样本数不足（需 ≥ 3 个时刻）才能稳定估算加速度，请增加提取帧数后重试。');return txt;}
     const totalDisp=Math.hypot(res.R[N-1].x-res.R[0].x,res.R[N-1].y-res.R[0].y);
-    txt+='• 物体共 '+N+' 个运动影像，平均速率约 <strong>'+formatNum(avgV,2)+' m/s</strong>。<br>';
+    txt+=t('• 物体共 {n} 个运动影像，平均速率约 <strong>{v} m/s</strong>。<br>',{n:N,v:formatNum(avgV,2)});
     if(res.fit&&res.fit.r2>=0.9){
         const fa=res.fit.a;
-        txt+='• 抛物线拟合加速度约 <strong>'+formatNum(fa,2)+' m/s²</strong>（R²='+res.fit.r2.toFixed(4)+'，远比逐点差分可靠）。<br>';
+        txt+=t('• 抛物线拟合加速度约 <strong>{a} m/s²</strong>（R²={r2}，远比逐点差分可靠）。<br>',{a:formatNum(fa,2),r2:res.fit.r2.toFixed(4)});
         if(res.fit.r2>=0.99){
-            txt+='• 加速度基本恒定，<strong>近似匀加速运动</strong>。<br>';
+            txt+=t('• 加速度基本恒定，<strong>近似匀加速运动</strong>。<br>');
             const fpsReal=parseFloat($('fpsReal')?$('fpsReal').value:'')||0;
             const dts=[];for(let i=1;i<N;i++){const d=res.inst[i].t-res.inst[i-1].t;if(d>0)dts.push(d);}
             const srt=[...dts].sort((a,b)=>a-b);
@@ -2584,25 +2665,25 @@ function buildAISummary(res){
             if(fpsC>0&&!fpsReal&&Math.abs(k-1)>0.2){
                 for(const f of[24,25,30,50,60,90,100,120,240,480]){
                     if(Math.abs(fSuggest-f)/f<0.08){
-                        txt+='• 💡 拟合值 ≈ g 的 <strong>'+k.toFixed(2)+' 倍</strong>，符合「'+f+' fps 拍摄、按 '+fpsC.toFixed(1)+' fps 导出」的时间基特征'+(k>1?'（视频被加速）':'（慢动作）')+'。在上方「实际拍摄帧率」填 <strong>'+f+'</strong> 可自动修正。<br>';
+                        txt+=t('• 💡 拟合值 ≈ g 的 <strong>{k} 倍</strong>，符合「{f} fps 拍摄、按 {fpsC} fps 导出」的时间基特征{tag}。在上方「实际拍摄帧率」填 <strong>{f}</strong> 可自动修正。<br>',{k:k.toFixed(2),f:f,fpsC:fpsC.toFixed(1),tag:(k>1?t('（视频被加速）'):t('（慢动作）'))});
                         hinted=true;break;
                     }
                 }
             }
             if(!hinted){
-                if(Math.abs(fa-9.8)/9.8<0.12){txt+='• 拟合值与自由落体 g ≈ 9.8 m/s² 接近（偏差 '+(Math.abs(fa-9.8)/9.8*100).toFixed(0)+'%），<strong>符合自由落体特征</strong>。<br>';}
-                else if(fa>9.8){txt+='• 拟合值明显大于 g ≈ 9.8 m/s²：常见原因——① 标记对应的帧被跳过/猜错（切换「缺失时刻」选项试试）；② 测量线段的真实长度偏小；③ 视频被加速导出（推测实际拍摄帧率约 '+formatNum(fSuggest,0)+' fps，可填入「实际拍摄帧率」验证）。<br>';}
-                else{txt+='• 拟合值明显小于 g ≈ 9.8 m/s²：常见原因——① 慢动作视频（推测实际拍摄帧率约 '+formatNum(fSuggest,0)+' fps，可填入「实际拍摄帧率」修正）；② 空气阻力/导轨摩擦；③ 投影方向不完全竖直或比例尺偏大。<br>';}
+                if(Math.abs(fa-9.8)/9.8<0.12){txt+=t('• 拟合值与自由落体 g ≈ 9.8 m/s² 接近（偏差 {p}%），<strong>符合自由落体特征</strong>。<br>',{p:(Math.abs(fa-9.8)/9.8*100).toFixed(0)});}
+                else if(fa>9.8){txt+=t('• 拟合值明显大于 g ≈ 9.8 m/s²：常见原因——① 标记对应的帧被跳过/猜错（切换「缺失时刻」选项试试）；② 测量线段的真实长度偏小；③ 视频被加速导出（推测实际拍摄帧率约 {f} fps，可填入「实际拍摄帧率」验证）。<br>',{f:formatNum(fSuggest,0)});}
+                else{txt+=t('• 拟合值明显小于 g ≈ 9.8 m/s²：常见原因——① 慢动作视频（推测实际拍摄帧率约 {f} fps，可填入「实际拍摄帧率」修正）；② 空气阻力/导轨摩擦；③ 投影方向不完全竖直或比例尺偏大。<br>',{f:formatNum(fSuggest,0)});}
             }
         }else{
-            txt+='• 拟合优度偏低（R²<0.99）：时刻分配可能有误或运动非匀加速，逐点差分结果波动大属正常现象（标记误差被 1/Δt² 放大）。<br>';
+            txt+=t('• 拟合优度偏低（R²<0.99）：时刻分配可能有误或运动非匀加速，逐点差分结果波动大属正常现象（标记误差被 1/Δt² 放大）。<br>');
         }
     }else{
         const avgA=res.accel.reduce((s,a)=>s+a,0)/res.accel.length;
-        txt+='• 平均加速度约 <strong>'+formatNum(avgA,2)+' m/s²</strong>（样本少或拟合度低，仅供参考）。<br>';
-        txt+='• 提示：至少 5 个时刻、且时刻分配正确时，抛物线拟合才可靠。<br>';
+        txt+=t('• 平均加速度约 <strong>{a} m/s²</strong>（样本少或拟合度低，仅供参考）。<br>',{a:formatNum(avgA,2)});
+        txt+=t('• 提示：至少 5 个时刻、且时刻分配正确时，抛物线拟合才可靠。<br>');
     }
-    txt+='• 首末位置直线距离约 <strong>'+formatNum(totalDisp,3)+' m</strong>。';
+    txt+=t('• 首末位置直线距离约 <strong>{d} m</strong>。',{d:formatNum(totalDisp,3)});
     return txt;
 }
 
@@ -2610,9 +2691,9 @@ function redrawAnalysis(){
     if(!analysisActive||lastRealSize<=0)return;
     updateMissingRow();
     const res=analyzeMotion(lastRealSize);
-    if(res&&res.needMeasure){$('analysisInfo').textContent='⚠️ 已标记物体，但还没测量尺寸：请点「📏 测量尺寸」，在物体上从起点拖到终点画一条线，并输入其真实长度。';return;}
-    if(res&&res.overCount){$('analysisInfo').textContent='⚠️ 你描了 '+res.overCount+' 个轮廓，但照片只有 '+res.frameCount+' 帧：请用「↩ 撤销上一个」删掉多余的标记。';return;}
-    if(!res){$('analysisInfo').textContent='⚠️ 至少标记 2 个运动物体影像才能分析（请先逐个描轮廓标记物体）。';return;}
+    if(res&&res.needMeasure){$('analysisInfo').textContent=t('⚠️ 已标记物体，但还没测量尺寸：请点「📏 测量尺寸」，在物体上从起点拖到终点画一条线，并输入其真实长度。');return;}
+    if(res&&res.overCount){$('analysisInfo').textContent=t('⚠️ 你描了 {n} 个轮廓，但照片只有 {m} 帧：请用「↩ 撤销上一个」删掉多余的标记。',{n:res.overCount,m:res.frameCount});return;}
+    if(!res){$('analysisInfo').textContent=t('⚠️ 至少标记 2 个运动物体影像才能分析（请先逐个描轮廓标记物体）。');return;}
     drawAnnotations(res);
     populateAnalysis(res);
 }
@@ -2624,7 +2705,7 @@ function updateMissingRow(){
     const diff=manualFrameList().length-manualMarks.length;
     if(diff>0){
         row.style.display='flex';
-        $('missingLabel').textContent='照片共 '+manualFrameList().length+' 个时刻，已标记 '+manualMarks.length+' 个，缺失的 '+diff+' 个在：';
+        $('missingLabel').textContent=t('照片共 {n} 个时刻，已标记 {m} 个，缺失的 {d} 个在：',{n:manualFrameList().length,m:manualMarks.length,d:diff});
     }else row.style.display='none';
 }
 $('missingPos').onchange=()=>{if(analysisActive&&lastRealSize>0)redrawAnalysis();};
@@ -2632,9 +2713,9 @@ $('fpsReal').oninput=()=>{if(analysisActive&&lastRealSize>0)redrawAnalysis();};
 
 $('analyzeBtn').onclick=()=>{
     const v=parseFloat($('objSizeInput').value);
-    if(!v||v<=0){alert('请输入测量线段对应的真实尺寸（需大于 0）');return;}
-    if(manualMarks.length&&!measureLine){alert('请先点「📏 测量尺寸」，在物体上从起点拖到终点画一条线');return;}
-    if(!manualMarks.length&&!confirm('未描轮廓标记物体，将使用自动检测。\n是否继续？'))return;
+    if(!v||v<=0){alert(t('请输入测量线段对应的真实尺寸（需大于 0）'));return;}
+    if(manualMarks.length&&!measureLine){alert(t('请先点「📏 测量尺寸」，在物体上从起点拖到终点画一条线'));return;}
+    if(!manualMarks.length&&!confirm(t('未描轮廓标记物体，将使用自动检测。\n是否继续？')))return;
     lastRealSize=v*parseFloat($('objSizeUnit').value);
     analysisActive=true;
     // 分析基于全部帧：将预览滑块拉满以显示所有影像
@@ -2649,11 +2730,11 @@ function setToolMode(m){
     $('paintObjBtn').style.outline=toolMode==='paint'?'2px solid #10b981':'';
     $('measureBtn').style.outline=toolMode==='measure'?'2px solid #fcd34d':'';
     toolCanvas.style.pointerEvents=toolMode?'auto':'none';
-    if(toolMode==='mask')$('manualStatus').textContent='🖌 涂抹模式（画笔 '+(Math.round(manualBrush))+' px）：在物体影像上按住左键拖动涂一笔，松手后按涂抹区域质心定位（拖右侧滑块调粗细）';
-    else if(toolMode==='paint')$('manualStatus').textContent='🖌 轮廓模式：沿每个运动物体影像的边缘各画一圈，按时间先后顺序描（松开即完成一个）';
-    else if(toolMode==='measure')$('manualStatus').textContent='📏 测量模式：在物体上从起点按住左键拖到终点';
-    else if(manualMarks.length&&!measureLine)$('manualStatus').textContent='✅ 已标记 '+manualMarks.length+' 个，下一步：📏 测量尺寸';
-    else if(manualMarks.length&&measureLine)$('manualStatus').textContent='✅ 已标记 '+manualMarks.length+' 个并测量，输入线段真实长度后点「计算」';
+    if(toolMode==='mask')$('manualStatus').textContent=t('🖌 涂抹模式（画笔 {n} px）：在物体影像上按住左键拖动涂一笔，松手后按涂抹区域质心定位（拖右侧滑块调粗细）',{n:Math.round(manualBrush)});
+    else if(toolMode==='paint')$('manualStatus').textContent=t('🖌 轮廓模式：沿每个运动物体影像的边缘各画一圈，按时间先后顺序描（松开即完成一个）');
+    else if(toolMode==='measure')$('manualStatus').textContent=t('📏 测量模式：在物体上从起点按住左键拖到终点');
+    else if(manualMarks.length&&!measureLine)$('manualStatus').textContent=t('✅ 已标记 {n} 个，下一步：📏 测量尺寸',{n:manualMarks.length});
+    else if(manualMarks.length&&measureLine)$('manualStatus').textContent=t('✅ 已标记 {n} 个并测量，输入线段真实长度后点「计算」',{n:manualMarks.length});
     else $('manualStatus').textContent='';
 }
 $('brushObjBtn').onclick=()=>setToolMode('mask');
@@ -2663,9 +2744,9 @@ $('measureBtn').onclick=()=>setToolMode('measure');
 function syncMarkBrush(){manualBrush=parseFloat($('markBrushSize').value)||24;$('markBrushVal').textContent=Math.round(manualBrush)+' px';}
 $('markBrushSize').oninput=syncMarkBrush;syncMarkBrush();
 $('undoMarkBtn').onclick=()=>{
-    if(!manualMarks.length){$('manualStatus').textContent='没有可撤销的标记';return;}
+    if(!manualMarks.length){$('manualStatus').textContent=t('没有可撤销的标记');return;}
     manualMarks.pop();renderToolOverlay();updateMissingRow();
-    $('manualStatus').textContent='↩ 已撤销，当前已标记 '+manualMarks.length+' 个';
+    $('manualStatus').textContent=t('↩ 已撤销，当前已标记 {n} 个',{n:manualMarks.length});
     if(analysisActive&&measureLine&&lastRealSize>0)redrawAnalysis();
 };
 $('clearMarkBtn').onclick=()=>{
@@ -2740,7 +2821,7 @@ toolCanvas.addEventListener('pointerup',e=>{
             measureLine=measureDrag;measureDrag=null;
             renderToolOverlay();
             setToolMode(null);
-            $('manualStatus').textContent='✅ 测量完成：线段 '+formatNum(len,1)+' px。输入其真实长度后点「计算」';
+            $('manualStatus').textContent=t('✅ 测量完成：线段 {len} px。输入其真实长度后点「计算」',{len:formatNum(len,1)});
             if(analysisActive&&lastRealSize>0)redrawAnalysis();
         }else{measureDrag=null;renderToolOverlay();}
     }
@@ -2749,7 +2830,7 @@ function finishPaintMark(){
     const w=toolCanvas.width,h=toolCanvas.height;
     const frames=manualFrameList();
     if(manualMarks.length>=frames.length){
-        $('manualStatus').textContent='⚠️ 已标记 '+manualMarks.length+' 个（帧数 '+frames.length+'），如画错请先「↩ 撤销」再重描';
+        $('manualStatus').textContent=t('⚠️ 已标记 {n} 个（帧数 {m}），如画错请先「↩ 撤销」再重描',{n:manualMarks.length,m:frames.length});
         toolCtx.clearRect(0,0,w,h);toolDrawing=false;
         return;
     }
@@ -2762,14 +2843,14 @@ function finishPaintMark(){
     toolCtx.clearRect(0,0,w,h); // 描画轨迹不保留，改显示虚线框标记
     clearStrokeBuf();
     if(maxX<0){toolDrawing=false;return;}
-    if(maxX-minX<8||maxY-minY<8){$('manualStatus').textContent='⚠️ 轮廓太小，请沿物体边缘重新画一圈';toolDrawing=false;return;}
+    if(maxX-minX<8||maxY-minY<8){$('manualStatus').textContent=t('⚠️ 轮廓太小，请沿物体边缘重新画一圈');toolDrawing=false;return;}
     const bw=maxX-minX+1,bh=maxY-minY+1;
     // 参考点取轮廓外接框中心（大致描轮廓即可对准）
     manualMarks.push({bbox:{x:minX,y:minY,w:bw,h:bh},cx:minX+bw/2,cy:minY+bh/2});
     renderToolOverlay();
     updateMissingRow();
     const left=frames.length-manualMarks.length;
-    $('manualStatus').textContent='✅ 已标记 '+manualMarks.length+'/'+frames.length+' 个'+(left>0?'（可继续补描，也可以直接计算）':'，下一步：📏 测量尺寸');
+    $('manualStatus').textContent=t('✅ 已标记 {a}/{b} 个{tail}',{a:manualMarks.length,b:frames.length,tail:left>0?t('（可继续补描，也可以直接计算）'):t('，下一步：📏 测量尺寸')});
     if(analysisActive&&measureLine&&lastRealSize>0)redrawAnalysis();
 }
 // 涂抹选物体：松手后取涂抹像素的重心作为质心（比外接框中心更能对准不规则物体），外接框取涂抹区域
@@ -2777,7 +2858,7 @@ function finishMaskMark(){
     const w=toolCanvas.width,h=toolCanvas.height;
     const frames=manualFrameList();
     if(manualMarks.length>=frames.length){
-        $('manualStatus').textContent='⚠️ 已标记 '+manualMarks.length+' 个（帧数 '+frames.length+'），如画错请先「↩ 撤销」再重涂';
+        $('manualStatus').textContent=t('⚠️ 已标记 {n} 个（帧数 {m}），如画错请先「↩ 撤销」再重涂',{n:manualMarks.length,m:frames.length});
         toolCtx.clearRect(0,0,w,h);toolDrawing=false;clearStrokeBuf();
         return;
     }
@@ -2787,14 +2868,14 @@ function finishMaskMark(){
     let sx=0,sy=0,c=0,minX=strokeBuf.width,maxX=-1,minY=strokeBuf.height,maxY=-1;
     for(let y=0;y<strokeBuf.height;y++)for(let x=0;x<strokeBuf.width;x++){const al=img[(y*strokeBuf.width+x)*4+3];if(al>10){sx+=x;sy+=y;c++;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;}}
     clearStrokeBuf();
-    if(c<30){$('manualStatus').textContent='⚠️ 涂抹区域太小，请在物体上重新涂一笔';toolDrawing=false;return;}
+    if(c<30){$('manualStatus').textContent=t('⚠️ 涂抹区域太小，请在物体上重新涂一笔');toolDrawing=false;return;}
     const bw=maxX-minX+1,bh=maxY-minY+1;
     // 质心取涂抹像素重心
     manualMarks.push({bbox:{x:minX,y:minY,w:bw,h:bh},cx:sx/c,cy:sy/c});
     renderToolOverlay();
     updateMissingRow();
     const left=frames.length-manualMarks.length;
-    $('manualStatus').textContent='✅ 已标记 '+manualMarks.length+'/'+frames.length+' 个'+(left>0?'（可继续补涂，也可以直接计算）':'，下一步：📏 测量尺寸');
+    $('manualStatus').textContent=t('✅ 已标记 {a}/{b} 个{tail}',{a:manualMarks.length,b:frames.length,tail:left>0?t('（可继续补涂，也可以直接计算）'):t('，下一步：📏 测量尺寸')});
     if(analysisActive&&measureLine&&lastRealSize>0)redrawAnalysis();
 }
 
