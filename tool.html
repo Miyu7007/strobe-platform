@@ -1202,6 +1202,79 @@ function captureByPlayback(video,t0,t1,canvas,ctx){
     });
 }
 
+// index16 补丁⑧：掉帧修复。播放采样时 rVFC 只对「实际呈现」的帧回调——解码器一旦掉帧
+// （冷启动、机器忙、后台标签降频），窗口内原生帧会永久缺失，「用满原生帧」名不副实，
+// 且概率性发生（同一视频同一窗口有时 14 帧有时 12 帧）。
+// 修复：按中位帧间隔检测异常大间隔（含窗口头部冷启动丢失），对该小区间以 0.25x 慢速
+// 重放补采缺失帧（仍是播放采样 + 原生 PTS，不引入 seek 竞态），与主时间轴合并去重。
+function recaptureRange(video,a,b,canvas,ctx){
+    return new Promise((resolve,reject)=>{
+        if(!video.requestVideoFrameCallback)return reject(new Error('rVFC 不可用'));
+        const frames=[];let finished=false;
+        const wasMuted=video.muted;
+        const safety=setTimeout(()=>done(true),(b-a)/0.25*1000+8000);
+        function done(ok){
+            if(finished)return;finished=true;
+            clearTimeout(safety);
+            try{video.pause();}catch(e){}
+            try{video.muted=wasMuted;}catch(e){}
+            try{video.playbackRate=1;}catch(e){}
+            video.onseeked=null;
+            ok?resolve(frames):reject(new Error('重放中断'));
+        }
+        function step(now,meta){
+            if(finished)return;
+            const mt=(meta&&typeof meta.mediaTime==='number')?meta.mediaTime:video.currentTime;
+            if(mt>=a-1e-3&&mt<=b+0.05){
+                ctx.drawImage(video,0,0,canvas.width,canvas.height);
+                frames.push({mediaTime:mt,imageData:ctx.getImageData(0,0,canvas.width,canvas.height),thumb:canvas.toDataURL('image/jpeg',0.7)});
+            }
+            if(mt>=b+1e-3||frames.length>=120)return done(true);
+            try{video.requestVideoFrameCallback(step);}catch(e){done(true);}
+        }
+        video.muted=true;
+        video.currentTime=Math.max(0,a-0.12);
+        video.onseeked=()=>{ video.onseeked=null;
+            video.playbackRate=0.25;
+            video.play().then(()=>{try{video.requestVideoFrameCallback(step);}catch(e){done(true);}})
+                         .catch(()=>done(true));
+        };
+    });
+}
+async function repairPlaybackGaps(video,dedup,canvas,ctx,t0,t1){
+    if(dedup.length<2)return dedup;
+    const gaps=[];for(let i=1;i<dedup.length;i++)gaps.push({a:dedup[i-1].mediaTime,b:dedup[i].mediaTime});
+    const lens=gaps.map(g=>g.b-g.a).sort((x,y)=>x-y);
+    const med=lens[Math.floor(lens.length/2)]||0;
+    if(!(med>1e-3))return dedup;
+    const ranges=[];
+    for(const g of gaps){
+        const L=g.b-g.a,n=Math.round(L/med)-1;
+        if(n>=1&&L>med*1.6){
+            for(let k=1;k<=n;k++)ranges.push([g.a+k*med-med*0.6,g.a+k*med+med*0.6]);
+        }
+    }
+    if(dedup[0].mediaTime-t0>med*1.6)ranges.push([t0,dedup[0].mediaTime-med*0.5]); // 窗口头端冷启动掉帧
+    if(!ranges.length)return dedup;
+    console.log('[原生帧修复] 检测到 '+ranges.length+' 处疑似掉帧区间，慢速重放补采');
+    const added=[];
+    for(const rg of ranges){
+        try{
+            const seg=await recaptureRange(video,rg[0],rg[1],canvas,ctx);
+            for(const f of seg){
+                if(f.mediaTime<t0-1e-3||f.mediaTime>t1+1e-3)continue;
+                if(dedup.some(c=>Math.abs(c.mediaTime-f.mediaTime)<1e-3))continue;
+                if(added.some(c=>Math.abs(c.mediaTime-f.mediaTime)<1e-3))continue;
+                added.push(f);
+            }
+        }catch(e){console.warn('[原生帧修复] 区间重放失败:',e&&e.message);}
+    }
+    if(!added.length)return dedup;
+    console.log('[原生帧修复] 补回 '+added.length+' 帧，时间轴 '+dedup.length+' -> '+(dedup.length+added.length));
+    const all=dedup.concat(added);all.sort((x,y)=>x.mediaTime-y.mediaTime);
+    const out=[];for(const c of all){if(!out.length||c.mediaTime-out[out.length-1].mediaTime>1e-4)out.push(c);}
+    return out;
+}
 // ============ 帧提取（两种模式共用）============
 extractBtn.onclick=async()=>{
     if(!selectedFile||!videoLoaded){showError(t('请先上传视频'));return}
@@ -1227,7 +1300,13 @@ extractBtn.onclick=async()=>{
         try{ caps=await captureByPlayback(video,startTime,endTime,canvas,ctx); }
         catch(e){ console.warn('[播放采样] 不可用，回退 seek 采样:',e&&e.message); }
         caps.sort((a,b)=>a.mediaTime-b.mediaTime);
-        const dedup=[];for(const c of caps){if(!dedup.length||c.mediaTime-dedup[dedup.length-1].mediaTime>1e-4)dedup.push(c);}
+        let dedup=[];for(const c of caps){if(!dedup.length||c.mediaTime-dedup[dedup.length-1].mediaTime>1e-4)dedup.push(c);}
+        // index16 补丁⑧：勾选「用满原生帧」时先做掉帧修复（见 repairPlaybackGaps 注释）
+        const useAllNativePre=!!($('useAllNative')&&$('useAllNative').checked);
+        if(useAllNativePre&&dedup.length>=2){
+            try{dedup=await repairPlaybackGaps(video,dedup,canvas,ctx,startTime,endTime);}
+            catch(e){console.warn('[原生帧修复] 失败，沿用原时间轴:',e&&e.message);}
+        }
         let chosen=dedup;
         // index16 补丁⑦：默认「用满窗口内全部原生帧」。只要抽取帧数小于原生帧数，
         // 频闪合成图就必然出现跳空（表现为两个球之间少一个球）——这是数学上不可避免的，
