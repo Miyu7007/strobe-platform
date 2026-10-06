@@ -2351,7 +2351,9 @@ async function loadProjectFile(file){
             extractedBrushFrames=extractedAutoFrames.map((f,idx)=>{
                 const fd=findFrameDef(f);
                 const mask=maskList[idx]||new Uint8Array(0);
-                return{imageData:f.data,data:f.data,mask,isBg:fd.isBg||false,width:f.data.width,height:f.data.height};
+                // index16 补丁⑩：必须带上 time/reqTime——否则导入涂抹模式项目后帧没有时刻，
+                // 分析表 t 列全「—」、v/a 全 0（自动模式走 extractedAutoFrames 有 time，所以只有涂抹模式坏）
+                return{imageData:f.data,data:f.data,mask,isBg:fd.isBg||false,width:f.data.width,height:f.data.height,time:f.time,reqTime:f.time};
             });
             const bgInData=data.bgFrameIndex||0;
             const bgFd=data.frames[bgInData];
